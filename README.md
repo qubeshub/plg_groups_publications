@@ -1,0 +1,1 @@
+"# group-publications-plugin" 
