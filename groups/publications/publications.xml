@@ -4,7 +4,7 @@
 plugin in projects and the resources plugin in groups to help me get this plug in done.  --> 
 
 <extension version="1.7" type="plugin" group="projects">
-	<name>Projects - Publications</name>
+	<name>Groups - Publications</name>
 	<author>Jacob Harless</author>
 	<copyright>Copyright QUBES</copyright>
 	<license>http://opensource.org/licenses/MIT MIT</license>
