@@ -29,20 +29,15 @@
  * @copyright Copyright 2005-2015 HUBzero Foundation, LLC.
  * @license   http://opensource.org/licenses/MIT MIT
  */
-
 // No direct access
 defined('_HZEXEC_') or die();
-
 $this->css()
      ->css('publications.css', 'com_publications')
      ->js('publications.js', 'com_publications');
-
 $config = Component::params('com_publications');
-
 // An array for storing all the links we make
 $links = array();
 $html = '';
-
 if ($this->cats)
 {
 	// Loop through each category
@@ -53,13 +48,10 @@ if ($this->cats)
 		{
 			// Is this the active category?
 			$a = ($cat['category'] == $this->active) ? ' class="active"' : '';
-
 			// If we have a specific category, prepend it to the search term
 			$blob = ($cat['category']) ? $cat['category'] : '';
-
 			// Build the HTML
 			$l = "\t" . '<li' . $a . '><a href="' . Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area='. urlencode(stripslashes($blob))) . '">' . $this->escape(stripslashes($cat['title'])) . ' <span class="item-count">' . $cat['total'] . '</span></a>';
-
 			// Are there sub-categories?
 			if (isset($cat['_sub']) && is_array($cat['_sub']))
 			{
@@ -73,10 +65,8 @@ if ($this->cats)
 					{
 						// Is this the active category?
 						$a = ($subcat['category'] == $this->active) ? ' class="active"' : '';
-
 						// If we have a specific category, prepend it to the search term
 						$blob = ($subcat['category']) ? $subcat['category'] : '';
-
 						// Build the HTML
 						$k[] = "\t\t\t" . '<li' . $a . '><a href="' . Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area='. urlencode(stripslashes($blob))) . '">' . $this->escape(stripslashes($subcat['title'])) . ' <span class="item-count">' . $subcat['total'] . '</span></a></li>';
 					}
@@ -91,12 +81,10 @@ if ($this->cats)
 				}
 			}
 			$l .= '</li>';
-
 			$links[] = $l;
 		}
 	}
 }
-
 ?>
 
 <?php if ($this->group->published == 1) { ?>
@@ -159,7 +147,6 @@ if ($this->cats)
 				foreach ($this->results as $category)
 				{
 					$amt = count($category);
-
 					if ($amt > 0)
 					{
 						$html .= '<ol class="publications results">'."\n";
@@ -175,7 +162,6 @@ if ($this->cats)
 					}
 				}
 				echo $html;
-
 				if (!$k)
 				{
 					echo '<p class="warning">' . Lang::txt('PLG_GROUPS_PUBLICATIONS_NONE') . '</p>';

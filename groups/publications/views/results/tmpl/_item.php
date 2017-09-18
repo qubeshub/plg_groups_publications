@@ -29,25 +29,17 @@
  * @copyright Copyright 2005-2015 HUBzero Foundation, LLC.
  * @license   http://opensource.org/licenses/MIT MIT
  */
-
 // No direct access
 defined('_HZEXEC_') or die();
-
-
-
 $database = App::get('db');
-
 // Instantiate a helper object
 //$RE = new \Components\Resources\Helpers\Helper($this->row->id, $database);
 //$RE->getContributors();
-
 // Get the component params and merge with resource params
 $config = Component::params('com_publications');
-
 $rparams = new \Hubzero\Config\Registry($this->row->params);
 $params = $config;
 $params->merge($rparams);
-
 // Set the display date
 $thedate = '';
 switch ($params->get('show_date'))
@@ -57,12 +49,10 @@ switch ($params->get('show_date'))
 	case 2: $thedate = Date::of($this->row->modified)->toLocal('d M Y');   break;
 	//case 3: $thedate = Date::of($this->row->publish_up)->toLocal('d M Y'); break;
 }
-
 if (strstr($this->row->href, 'index.php'))
 {
 	$this->row->href = Route::url($this->row->href);  //where href is set
 }
-
 switch ($this->row->access)
 {
 	case 1: $cls = 'registered'; break;
