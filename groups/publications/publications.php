@@ -702,26 +702,27 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				// Loop through the results and set each item's HREF
 				foreach ($rows as $key => $row)
 				{
+					//if we were a supergroup, this would be different
 					if ($this->group->type == '3')
 					{
 						if ($row->alias)
 						{
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $this->group->cn . '&active=resources&alias=' . $row->alias);
+							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $this->group->cn . '&active=publications&alias=' . $row->alias);
 						}
 						else
 						{
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $this->group->cn . '&active=resources&id=' . $row->id);
+							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $this->group->cn . '&active=publications&id=' . $row->id);
 						}
 					}
 					else
 					{
 						if ($row->alias)
 						{
-							$rows[$key]->href = Route::url('index.php?option=com_resources&alias=' . $row->alias);
+							$rows[$key]->href = Route::url('index.php?option=com_publications&alias=' . $row->alias);
 						}
-						else
+						else //most common case
 						{
-							$rows[$key]->href = Route::url('index.php?option=com_resources&id=' . $row->id);
+							$rows[$key]->href = Route::url('index.php?option=com_publications&id=' . $row->id);
 						}
 					}
 				}
