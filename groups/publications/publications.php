@@ -373,35 +373,35 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				// If we have a specific ID and we're a supergroup, serve a resource page inside supergroup template
 				if (Request::getVar('id', Request::getVar('alias', null)) && $this->group->type == 3)
 				{
-					// // Load neccesities for com_resources controller
-					// $lang = App::get('language');
-					// $lang->load('com_resources', Component::path('com_resources') . DS . 'site');
-					// require_once Component::path('com_resources') . DS .'models' . DS . 'resource.php';
-					// require_once Component::path('com_resources') . DS .'site' . DS . 'controllers' . DS . 'resources.php';
-					// require_once Component::path('com_resources') . DS .'helpers' . DS . 'helper.php';
-					// require_once Component::path('com_resources') . DS .'helpers' . DS . 'html.php';
-					// require_once Component::path('com_resources') . DS .'helpers' . DS . 'tags.php';
-					// require_once Component::path('com_tools') . DS . 'tables' . DS . 'tool.php';
-					// require_once Component::path('com_tools') . DS . 'tables' . DS . 'version.php';
-					// require_once Component::path('com_tools') . DS . 'tables' . DS . 'author.php';
+					// Load neccesities for com_resources controller
+					$lang = App::get('language');
+					$lang->load('com_publications', Component::path('com_publications') . DS . 'site');
+					require_once Component::path('com_publications') . DS .'models' . DS . 'publication.php';
+					require_once Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php';
+					require_once Component::path('com_publications') . DS .'helpers' . DS . 'utilities.php';//replaced helper.php with utilities.php
+					require_once Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
+					require_once Component::path('com_publications') . DS .'helpers' . DS . 'tags.php';
+					require_once Component::path('com_tools') . DS . 'tables' . DS . 'tool.php';
+					require_once Component::path('com_tools') . DS . 'tables' . DS . 'version.php';
+					require_once Component::path('com_tools') . DS . 'tables' . DS . 'author.php';
 
-					// // Set the request up to make it look like a user made the request to the controller
-					// Request::setVar('task', 'view');
-					// Request::setVar('option', 'com_resources');
-					// Request::setVar('active', Request::get('tab_active', 'about'));
-					// // Add some extra variables to let the tab view know we need a different base url
-					// Request::setVar('tab_active_key', 'tab_active');
-					// Request::setVar('tab_base_url', 'index.php?option=' . $this->option . '&cn=' . $this->group->cn . '&active=resources');
-					// // Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
-					// Request::setVar('noview', 1);
+					// Set the request up to make it look like a user made the request to the controller
+					Request::setVar('task', 'view');
+					Request::setVar('option', 'com_publications');
+					Request::setVar('active', Request::get('tab_active', 'about'));
+					// Add some extra variables to let the tab view know we need a different base url
+					Request::setVar('tab_active_key', 'tab_active');
+					Request::setVar('tab_base_url', 'index.php?option=' . $this->option . '&cn=' . $this->group->cn . '&active=publications');
+					// Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
+					Request::setVar('noview', 1);
 
-					// // Instantiate the controller and have it execute
-					// $newtest = new \Components\Resources\Site\Controllers\Resources(array('base_path'=>Component::path('com_resources') . DS . 'site'));
-					// $newtest->execute();
+					// Instantiate the controller and have it execute
+					$newtest = new \Components\Publications\Site\Controllers\Publications(array('base_path'=>Component::path('com_publications') . DS . 'site'));
+					$newtest->execute();
 
-					// // Set up the return for the plugin 'view'
-					// $arr['html'] = $newtest->view->loadTemplate();
-					// $arr['metadata']['count'] = $total;
+					// Set up the return for the plugin 'view'
+					$arr['html'] = $newtest->view->loadTemplate();
+					$arr['metadata']['count'] = $total;
 				}
 				else
 				{
