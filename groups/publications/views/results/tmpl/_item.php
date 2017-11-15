@@ -52,6 +52,7 @@ switch ($params->get('show_date'))
 if (strstr($this->row->href, 'index.php'))
 {
 	$this->row->href = Route::url($this->row->href);  //where href is set
+	
 }
 switch ($this->row->access)
 {

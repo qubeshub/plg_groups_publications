@@ -91,17 +91,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 
 		public function &onGroupAreas()
 	{
-		//$area = array();
-
-		// Check if plugin is restricted to certain projects
-		//$groups = $this->params->get('restricted') ? \Components\Group\Helpers\Html::getParamArray($this->params->get('restricted')) : array();
-		/*if (!empty($projects) && $alias)
-		{
-			if (!in_array($alias, $projects))
-			{
-				return $area;
-			}
-		}*/
+		
 
 
 		$area = array(
@@ -117,38 +107,6 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		return $area;
 	}
 
-	/**
-	 * Event call to return count of items
-	 *
-	 * @param   object  $model   Project
-	 * @return  array   integer
-	 
-	public function &onGroupCount($model)
-	{
-		// Get this area details, changed from onProjectAreas to onGroupAreas
-		$this->_area = $this->onGroupAreas();
-
-		if (empty($this->_area) || !$model->exists())
-		{
-			return $counts['publications'] = 0;
-		}
-		else
-		{
-			$database = App::get('db');
-
-			// Instantiate project publication
-			$objP = new \Components\Publications\Tables\Publication($database);
-
-			$filters = array();
-			//changed from filters['project']
-			$filters['group']       = $model->get('id');
-			$filters['ignore_access'] = 1;
-			$filters['dev']           = 1;
-
-			$counts['publications'] = $objP->getCount($filters);
-			return $counts;
-		}
-	}*/
 
 	/**
 	 * Event call to return data for a specific group
@@ -205,36 +163,36 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 
 		if ($return == 'html')
 		{
-			//if set to nobody make sure they cant access
-			if ($group_plugin_acl == 'nobody')
-			{
-				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_OFF', ucfirst($active)) . '</p>';
-				return $arr;
-			}
+			//if set to nobody make sure they cant access TODO
+			// if ($group_plugin_acl == 'nobody')
+			// {
+			// 	$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_OFF', ucfirst($active)) . '</p>';
+			// 	return $arr;
+			// }
 
 			//check if guest and force login if plugin access is registered or members
-			if (User::isGuest()
-			 && ($group_plugin_acl == 'registered' || $group_plugin_acl == 'members'))
-			{
-				$area = Request::getWord('area', 'publications');//changed from 'resources' to 'publications'
-				$url = Route::url('index.php?option=com_groups&cn=' . $group->get('cn') . '&active=' . $active . '&area=' . $area);
+			// if (User::isGuest()
+			//  && ($group_plugin_acl == 'registered' || $group_plugin_acl == 'members'))
+			// {
+			// 	$area = Request::getWord('area', 'publications');//changed from 'resources' to 'publications'
+			// 	$url = Route::url('index.php?option=com_groups&cn=' . $group->get('cn') . '&active=' . $active . '&area=' . $area);
 
-				App::redirect(
-					Route::url('index.php?option=com_users&view=login&return=' . base64_encode($url)),
-					Lang::txt('GROUPS_PLUGIN_REGISTERED', ucfirst($active)),
-					'warning'
-				);
-				return;
-			}
+			// 	App::redirect(
+			// 		Route::url('index.php?option=com_users&view=login&return=' . base64_encode($url)),
+			// 		Lang::txt('GROUPS_PLUGIN_REGISTERED', ucfirst($active)),
+			// 		'warning'
+			// 	);
+			// 	return;
+			// }
 
 			//check to see if user is member and plugin access requires members
-			if (!in_array(User::get('id'), $members)
-			 && $group_plugin_acl == 'members'
-			 && $authorized != 'admin')
-			{
-				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MEMBER', ucfirst($active)) . '</p>';
-				return $arr;
-			}
+			// if (!in_array(User::get('id'), $members)
+			//  && $group_plugin_acl == 'members'
+			//  && $authorized != 'admin')
+			// {
+			// 	$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MEMBER', ucfirst($active)) . '</p>';
+			// 	return $arr;
+			// }
 		}
 
 		$database = App::get('db');
@@ -370,38 +328,70 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		switch ($return)
 		{
 			case 'html':
-				// If we have a specific ID and we're a supergroup, serve a resource page inside supergroup template
+				// If we have a specific ID and we're a supergroup, serve a publication page inside supergroup template
 				if (Request::getVar('id', Request::getVar('alias', null)) && $this->group->type == 3)
 				{
-					// Load neccesities for com_resources controller
-					$lang = App::get('language');
-					$lang->load('com_publications', Component::path('com_publications') . DS . 'site');
-					require_once Component::path('com_publications') . DS .'models' . DS . 'publication.php';
-					require_once Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php';
-					require_once Component::path('com_publications') . DS .'helpers' . DS . 'utilities.php';//replaced helper.php with utilities.php
-					require_once Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
-					require_once Component::path('com_publications') . DS .'helpers' . DS . 'tags.php';
-					require_once Component::path('com_tools') . DS . 'tables' . DS . 'tool.php';
-					require_once Component::path('com_tools') . DS . 'tables' . DS . 'version.php';
-					require_once Component::path('com_tools') . DS . 'tables' . DS . 'author.php';
 
-					// Set the request up to make it look like a user made the request to the controller
-					Request::setVar('task', 'view');
-					Request::setVar('option', 'com_publications');
-					Request::setVar('active', Request::get('tab_active', 'about'));
-					// Add some extra variables to let the tab view know we need a different base url
-					Request::setVar('tab_active_key', 'tab_active');
-					Request::setVar('tab_base_url', 'index.php?option=' . $this->option . '&cn=' . $this->group->cn . '&active=publications');
-					// Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
-					Request::setVar('noview', 1);
+					//Uncomment this section below for the not working yet-trying to just replicate the component method
+					// //Load neccesities for com_publications controller
+					// $lang = App::get('language');
+					// $lang->load('com_publications', Component::path('com_publications') . DS . 'site');
+					// require_once Component::path('com_publications') . DS .'models' . DS . 'publication.php';
+					// require_once Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php';
+					// //require_once Component::path('com_publications') . DS .'helpers' . DS . 'utilities.php';//replaced helper.php with utilities.php
+					// require_once Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
+					// require_once Component::path('com_publications') . DS .'helpers' . DS . 'tags.php';
+					// require_once Component::path('com_tools') . DS . 'tables' . DS . 'tool.php';
+					// require_once Component::path('com_tools') . DS . 'tables' . DS . 'version.php';
+					// require_once Component::path('com_tools') . DS . 'tables' . DS . 'author.php';
 
-					// Instantiate the controller and have it execute
-					$newtest = new \Components\Publications\Site\Controllers\Publications(array('base_path'=>Component::path('com_publications') . DS . 'site'));
-					$newtest->execute();
+					// // Set the request up to make it look like a user made the request to the controller
+					// Request::setVar('task', 'view');
+					// Request::setVar('option', 'com_publications');
+					// Request::setVar('active', Request::get('tab_active', 'about'));
+					// // Add some extra variables to let the tab view know we need a different base url
+					// Request::setVar('tab_active_key', 'tab_active');
+					// Request::setVar('tab_base_url', 'index.php?option=' . $this->option . '&cn=' . $this->group->cn . '&active=publications');
+					// // Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
+					// Request::setVar('noview', 1);
 
-					// Set up the return for the plugin 'view'
-					$arr['html'] = $newtest->view->loadTemplate();
+					// // Instantiate the controller and have it execute
+					// $newtest = new \Components\Publications\Site\Controllers\Publications(array('base_path'=>Component::path('com_publications') . DS . 'site'));
+					// $newtest->execute();
+
+					// // Set up the return for the plugin 'view'
+					// $arr['html'] = $newtest->view->loadTemplate();
+					// $arr['metadata']['count'] = $total;
+
+					$view = $this->view('result','results');
+					$view->option = $option;
+					$view->group = $group;
+					foreach ($results as $category){
+						$amt = count($category);
+						if ($amt > 0)
+						{
+							foreach ($category as $row)
+							{
+								if ($row->id ==Request::getVar('id', Request::getVar('alias', null))){
+									$view->row=$row;
+								}
+						}
+
+					}
+					}
+					$view->selectedpub= Request::getVar('id', Request::getVar('alias', null)) ;
+					$view->sort = $sort;
+					$view->authorized = $authorized;
+					$view->access = $access;
+
+					foreach ($this->getErrors() as $error)
+					{
+						$view->setError($error);
+					}
+				    //$arr['html'] = $newtest->view->loadTemplate();
 					$arr['metadata']['count'] = $total;
+					$arr['html'] = $view->loadTemplate();
+					
 				}
 				else
 				{
