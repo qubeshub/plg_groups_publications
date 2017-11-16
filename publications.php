@@ -687,6 +687,8 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			
 			$rows = $pubtable->getRecords($filters);
 			// Did we get any results?
+			// print_r($rows);
+
 			if ($rows)
 			{
 				// Loop through the results and set each item's HREF
@@ -817,14 +819,14 @@ public function getRecords($filters = array(), $admin = false)
 
 		$sql .= ", (SELECT COUNT(*) FROM `#__publication_versions` WHERE publication_id=C.id AND state!=3) AS versions ";
 
-		$sortby  = isset($filters['sortby']) ? $filters['sortby'] : 'title';
+		// $sortby  = isset($filters['sortby']) ? $filters['sortby'] : 'title';
 
-		if ($sortby == 'popularity')
-		{
-			$sql .= ", (SELECT S.users FROM `#__publication_stats` AS S WHERE S.publication_id=C.id AND S.period=14 ORDER BY S.datetime DESC LIMIT 1) as stat ";
-		}
+		// if ($sortby == 'popularity')
+		// {
+		// 	$sql .= ", (SELECT S.users FROM `#__publication_stats` AS S WHERE S.publication_id=C.id AND S.period=14 ORDER BY S.datetime DESC LIMIT 1) as stat ";
+		// }
 
-		$sql .= (isset($filters['tag']) && $filters['tag'] != '') ? ", TA.tag, COUNT(DISTINCT TA.tag) AS uniques " : " ";
+		// $sql .= (isset($filters['tag']) && $filters['tag'] != '') ? ", TA.tag, COUNT(DISTINCT TA.tag) AS uniques " : " ";
 		$sql .= $this->buildQuery($filters, $admin);
 		$start = isset($filters['start']) ? $filters['start'] : 0;
 		$sql .= (isset($filters['limit']) && $filters['limit'] > 0) ? " LIMIT " . $start . ", " . $filters['limit'] : "";
@@ -853,19 +855,19 @@ public function getRecords($filters = array(), $admin = false)
 		$query  = "FROM ";
 		if (isset($filters['tag']) && $filters['tag'] != '')
 		{
-			$query .= "#__tags_object AS RTA ";
-			$query .= "INNER JOIN #__tags AS TA ON RTA.tagid = TA.id AND RTA.tbl='publications', ";
+			$query .= "`#__tags_object` AS RTA ";
+			$query .= "INNER JOIN `#__tags` AS TA ON RTA.tagid = TA.id AND RTA.tbl='publications', ";
 		}
 
-		$query .= " #__publication_versions as V, #__projects as PP,
-				  #__publication_master_types AS MT";
+		$query .= " `#__publication_versions` as V, `#__projects` as PP,
+				  `#__publication_master_types` AS MT";
 		if (isset($filters['author']) && intval($filters['author']))
 		{
-			$query .= ", #__publication_authors as A ";
+			$query .= ", `#__publication_authors` as A ";
 		}
-		$query .= ", $this->_tbl AS C ";
+		$query .= ", `$this->_tbl` AS C ";
 
-		$query .= "LEFT JOIN #__publication_categories AS t ON t.id=C.category ";
+		$query .= "LEFT JOIN `#__publication_categories` AS t ON t.id=C.category ";
 		$query .= " WHERE V.publication_id=C.id AND MT.id=C.master_type AND PP.id = C.project_id ";
 
 		if ($dev)
@@ -925,7 +927,7 @@ public function getRecords($filters = array(), $admin = false)
 		}
 		else
 		{
-			$query .= " AND V.version_number = (SELECT MAX(version_number) FROM #__publication_versions
+			$query .= " AND V.version_number = (SELECT MAX(version_number) FROM `#__publication_versions`
 						WHERE publication_id=C.id AND state=1 ) AND (V.state=1";
 			if (count($projects) > 0)
 			{
@@ -954,11 +956,10 @@ public function getRecords($filters = array(), $admin = false)
 				$query .= " AND t.url_alias='" . $filters['category']."' ";
 			}
 		}
-		//group owner
+		// group owner - either owned directly by group, or within project owned by group
 		if (isset($filters['group_owner']) && $filters['group_owner'] != '')
 		{
-			
-			$query .= " AND C.group_owner=" . $filters['group_owner']." ";
+			$query .= " AND (C.group_owner=" . $filters['group_owner']." OR PP.owned_by_group=" . $filters['group_owner'].") ";
 			
 		}
 		if (isset($filters['author']) && intval($filters['author']))
