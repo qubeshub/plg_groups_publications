@@ -396,7 +396,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				else
 				{
 					// Instantiate a vew
-					$view = $this->view('default', 'results');
+					$view = $this->view('cards', 'results');
 
 					// Pass the view some info
 					$view->option = $option;
