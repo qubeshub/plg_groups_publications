@@ -83,17 +83,14 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	}
 
 
-		/**
+	/**
 	 * Return the alias and name for this category of content name. changed from on ProjectAreas to onGroupAreas 
 	 *
 	 * @return     array
 	 */
 
-		public function &onGroupAreas()
+	public function &onGroupAreas()
 	{
-		
-
-
 		$area = array(
 			'name'    => 'publications',
 			'title'   => Lang::txt('PLG_GROUPS_PUBLICATIONS'),
@@ -101,7 +98,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			'display_menu_tab' => $this->params->get('display_tab', 1),
 			'submenu' => null,
 			'show'    => true,
-			'icon'    => 'f058'
+			'icon'    => 'f053'
 		);
 
 		return $area;
@@ -118,7 +115,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 
 	public function onGroup($model, $action = '', $areas = null)*/
 
-		/**
+	/**
 	 * Return data on a group view (this will be some form of HTML)
 	 *
 	 * @param      object  $group      Current group
@@ -389,7 +386,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 						$view->setError($error);
 					}
 				    //$arr['html'] = $newtest->view->loadTemplate();
-					$arr['metadata']['count'] = $total;
+					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 					$arr['html'] = $view->loadTemplate();
 					
 				}
@@ -418,13 +415,13 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 					}
 
 					// Return the output
-					$arr['metadata']['count'] = $total;
+					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 					$arr['html'] = $view->loadTemplate();
 				}
 			break;
 
 			case 'metadata':
-				$arr['metadata']['count'] = $total;
+				$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 			break;
 		}
 
@@ -598,7 +595,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @return     mixed Returns integer when counting records, array when retrieving records
 	 */
 	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all', $areas=null)
-{
+	{
 		// Check if our area is in the array of areas we want to return results for
 		if (is_array($areas) && $limit)
 		{
