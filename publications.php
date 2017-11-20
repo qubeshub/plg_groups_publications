@@ -83,17 +83,14 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	}
 
 
-		/**
+	/**
 	 * Return the alias and name for this category of content name. changed from on ProjectAreas to onGroupAreas 
 	 *
 	 * @return     array
 	 */
 
-		public function &onGroupAreas()
+	public function &onGroupAreas()
 	{
-		
-
-
 		$area = array(
 			'name'    => 'publications',
 			'title'   => Lang::txt('PLG_GROUPS_PUBLICATIONS'),
@@ -101,7 +98,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			'display_menu_tab' => $this->params->get('display_tab', 1),
 			'submenu' => null,
 			'show'    => true,
-			'icon'    => 'f058'
+			'icon'    => 'f053'
 		);
 
 		return $area;
@@ -118,7 +115,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 
 	public function onGroup($model, $action = '', $areas = null)*/
 
-		/**
+	/**
 	 * Return data on a group view (this will be some form of HTML)
 	 *
 	 * @param      object  $group      Current group
@@ -389,14 +386,14 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 						$view->setError($error);
 					}
 				    //$arr['html'] = $newtest->view->loadTemplate();
-					$arr['metadata']['count'] = $total;
+					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 					$arr['html'] = $view->loadTemplate();
 					
 				}
 				else
 				{
 					// Instantiate a vew
-					$view = $this->view('default', 'results');
+					$view = $this->view('cards', 'results');
 
 					// Pass the view some info
 					$view->option = $option;
@@ -418,13 +415,13 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 					}
 
 					// Return the output
-					$arr['metadata']['count'] = $total;
+					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 					$arr['html'] = $view->loadTemplate();
 				}
 			break;
 
 			case 'metadata':
-				$arr['metadata']['count'] = $total;
+				$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 			break;
 		}
 
@@ -598,7 +595,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @return     mixed Returns integer when counting records, array when retrieving records
 	 */
 	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all', $areas=null)
-{
+	{
 		// Check if our area is in the array of areas we want to return results for
 		if (is_array($areas) && $limit)
 		{
@@ -687,6 +684,8 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			
 			$rows = $pubtable->getRecords($filters);
 			// Did we get any results?
+			// print_r($rows);
+
 			if ($rows)
 			{
 				// Loop through the results and set each item's HREF
@@ -817,14 +816,14 @@ public function getRecords($filters = array(), $admin = false)
 
 		$sql .= ", (SELECT COUNT(*) FROM `#__publication_versions` WHERE publication_id=C.id AND state!=3) AS versions ";
 
-		$sortby  = isset($filters['sortby']) ? $filters['sortby'] : 'title';
+		// $sortby  = isset($filters['sortby']) ? $filters['sortby'] : 'title';
 
-		if ($sortby == 'popularity')
-		{
-			$sql .= ", (SELECT S.users FROM `#__publication_stats` AS S WHERE S.publication_id=C.id AND S.period=14 ORDER BY S.datetime DESC LIMIT 1) as stat ";
-		}
+		// if ($sortby == 'popularity')
+		// {
+		// 	$sql .= ", (SELECT S.users FROM `#__publication_stats` AS S WHERE S.publication_id=C.id AND S.period=14 ORDER BY S.datetime DESC LIMIT 1) as stat ";
+		// }
 
-		$sql .= (isset($filters['tag']) && $filters['tag'] != '') ? ", TA.tag, COUNT(DISTINCT TA.tag) AS uniques " : " ";
+		// $sql .= (isset($filters['tag']) && $filters['tag'] != '') ? ", TA.tag, COUNT(DISTINCT TA.tag) AS uniques " : " ";
 		$sql .= $this->buildQuery($filters, $admin);
 		$start = isset($filters['start']) ? $filters['start'] : 0;
 		$sql .= (isset($filters['limit']) && $filters['limit'] > 0) ? " LIMIT " . $start . ", " . $filters['limit'] : "";
@@ -853,19 +852,19 @@ public function getRecords($filters = array(), $admin = false)
 		$query  = "FROM ";
 		if (isset($filters['tag']) && $filters['tag'] != '')
 		{
-			$query .= "#__tags_object AS RTA ";
-			$query .= "INNER JOIN #__tags AS TA ON RTA.tagid = TA.id AND RTA.tbl='publications', ";
+			$query .= "`#__tags_object` AS RTA ";
+			$query .= "INNER JOIN `#__tags` AS TA ON RTA.tagid = TA.id AND RTA.tbl='publications', ";
 		}
 
-		$query .= " #__publication_versions as V, #__projects as PP,
-				  #__publication_master_types AS MT";
+		$query .= " `#__publication_versions` as V, `#__projects` as PP,
+				  `#__publication_master_types` AS MT";
 		if (isset($filters['author']) && intval($filters['author']))
 		{
-			$query .= ", #__publication_authors as A ";
+			$query .= ", `#__publication_authors` as A ";
 		}
-		$query .= ", $this->_tbl AS C ";
+		$query .= ", `$this->_tbl` AS C ";
 
-		$query .= "LEFT JOIN #__publication_categories AS t ON t.id=C.category ";
+		$query .= "LEFT JOIN `#__publication_categories` AS t ON t.id=C.category ";
 		$query .= " WHERE V.publication_id=C.id AND MT.id=C.master_type AND PP.id = C.project_id ";
 
 		if ($dev)
@@ -925,7 +924,7 @@ public function getRecords($filters = array(), $admin = false)
 		}
 		else
 		{
-			$query .= " AND V.version_number = (SELECT MAX(version_number) FROM #__publication_versions
+			$query .= " AND V.version_number = (SELECT MAX(version_number) FROM `#__publication_versions`
 						WHERE publication_id=C.id AND state=1 ) AND (V.state=1";
 			if (count($projects) > 0)
 			{
@@ -954,11 +953,10 @@ public function getRecords($filters = array(), $admin = false)
 				$query .= " AND t.url_alias='" . $filters['category']."' ";
 			}
 		}
-		//group owner
+		// group owner - either owned directly by group, or within project owned by group
 		if (isset($filters['group_owner']) && $filters['group_owner'] != '')
 		{
-			
-			$query .= " AND C.group_owner=" . $filters['group_owner']." ";
+			$query .= " AND (C.group_owner=" . $filters['group_owner']." OR PP.owned_by_group=" . $filters['group_owner'].") ";
 			
 		}
 		if (isset($filters['author']) && intval($filters['author']))
