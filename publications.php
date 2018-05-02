@@ -3,13 +3,13 @@
 * @package hubzero-cms
 * QUBEShub
 * @author jacob harless-jrharless@email.wm.edu
-* 
+*
 */
 defined('_HZEXEC_') or die();
 //need to include publications tables in the publications component
 //require_once(dirname(__DIR__) . DS . 'tables' . DS . 'publication.php');
 
-include_once PATH_CORE . DS . 'components' . DS . 'com_publications' . DS . 'models' . DS . 'publication.php';
+include_once \Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
 
 //include_once PATH_CORE . DS . 'components' . DS . 'com_publications' . DS . 'tables' . DS . 'publication.php';
 use Components\Publications\Tables\Publication as Publicationtable;
@@ -18,7 +18,7 @@ use Components\Publications\Tables\Publication as Publicationtable;
 * class has naming convention plg<plugintype><pluginname> and extends the plugins library
 */
 
-class plgGroupsPublications extends \Hubzero\Plugin\Plugin 
+class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 {
 
 	/**
@@ -27,7 +27,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @var  boolean
 	 */
 
-	
+
 	protected $_autoloadLanguage = true;
 
 		/**
@@ -84,7 +84,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 
 
 	/**
-	 * Return the alias and name for this category of content name. changed from on ProjectAreas to onGroupAreas 
+	 * Return the alias and name for this category of content name. changed from on ProjectAreas to onGroupAreas
 	 *
 	 * @return     array
 	 */
@@ -112,7 +112,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @param   string  $action  Plugin task
 	 * @param   string  $areas   Plugins to return data
 	 * @return  array   Return array of html
-	 
+
 	public function onGroup($model, $action = '', $areas = null)*/
 
 	/**
@@ -128,7 +128,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @param      array   $areas      Active area(s)
 	 * @return     array
 	 */
-	
+
 	public function onGroup($group, $option, $authorized, $limit=0, $limitstart=0, $action='', $access, $areas=null)
 	{
 		$this->group = $group;
@@ -388,7 +388,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				    //$arr['html'] = $newtest->view->loadTemplate();
 					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 					$arr['html'] = $view->loadTemplate();
-					
+
 				}
 				else
 				{
@@ -541,7 +541,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	}
 
 	// /** Remant from projects/publications plugin, not sure if needed
-	//  * Event call to get side content for main group page, changed name 
+	//  * Event call to get side content for main group page, changed name
 	//  *
 	//  * @param   object  $model
 	//  * @return  mixed
@@ -625,7 +625,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	$filters['authorized'] = $authorized;
 	$filters['state'] = array(1);
 	//get categories of project
-	
+
 	$filters = array();
 	$filters['limit']         = Request::getInt('limit', Config::get('list_limit'));
 	$filters['start']         = Request::getInt('limitstart', 0);
@@ -651,7 +651,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		// 	$cats[$normalized] = array();
 		// 	$cats[$normalized]['id'] = $categories[$i]->id;
 		// }
-	
+
 	if ($limit)
 		{
 			if ($this->_total != null)
@@ -668,8 +668,8 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				return array();
 			}
 			}
-		
-			
+
+
 			$filters['group_owner'] = $group->get('gidNumber');
 			$filters['sortby'] = 'title';
 			$filters['limit'] = $limit;
@@ -681,7 +681,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				$filters['type'] = $cats[$areas[0]]['id'];
 			}
 			// Get results
-			
+
 			$rows = $pubtable->getRecords($filters);
 			// Did we get any results?
 			// print_r($rows);
@@ -957,7 +957,7 @@ public function getRecords($filters = array(), $admin = false)
 		if (isset($filters['group_owner']) && $filters['group_owner'] != '')
 		{
 			$query .= " AND (C.group_owner=" . $filters['group_owner']." OR PP.owned_by_group=" . $filters['group_owner'].") ";
-			
+
 		}
 		if (isset($filters['author']) && intval($filters['author']))
 		{
@@ -965,7 +965,7 @@ public function getRecords($filters = array(), $admin = false)
 			$query .= " AND A.status=1 AND (A.role IS NULL OR A.role!='submitter') ";
 		}
 
-	
+
 
 		// Master type
 		if (isset($filters['master_type']) && $filters['master_type'] != '')

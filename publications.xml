@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!--This is the publication plugin for groups manifest file. here we set the language, main php file, and some params, I am using code from the publications 
-plugin in projects and the resources plugin in groups to help me get this plug in done.  --> 
+<!--This is the publication plugin for groups manifest file. here we set the language, main php file, and some params, I am using code from the publications
+plugin in projects and the resources plugin in groups to help me get this plug in done.  -->
 
-<extension version="1.7" type="plugin" group="projects">
+<extension version="0.1" type="plugin" group="groups">
 	<name>Groups - Publications</name>
 	<author>Jacob Harless</author>
-	<copyright>Copyright QUBES</copyright>
+	<creationDate>May 2018</creationDate>
+	<version>0.1</version>
+	<copyright>Copyright 2018 QUBES</copyright>
 	<license>http://opensource.org/licenses/MIT MIT</license>
 	<description>View publications in groups</description>
 	<files>
 		<filename plugin="publications">publications.php</filename>
+		<filename>index.html</filename>
 	</files>
-	<languages>
-		<language tag="en-GB">en-GB.plg_groups_publications.ini</language>
-	</languages>
 	<config>
 		<fields name="params">
 			<fieldset name="basic">
@@ -44,4 +44,8 @@ plugin in projects and the resources plugin in groups to help me get this plug i
 			</fieldset>
 		</fields>
 	</config>
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.plg_groups_publications.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.plg_groups_publications.sys.ini</language>
+	</languages>
 </extension>
