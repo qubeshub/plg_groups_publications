@@ -2,7 +2,7 @@
 	"name": "qubeshub/group-publications-plugin",
 	"description": "Group publications plugin",
 	"type": "hubzero-plugin",
-  "extra": {
+  	"extra": {
 	    "install-directory": "/plugins/groups/publications"
 	}
 }
