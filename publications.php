@@ -9,7 +9,7 @@
 defined('_HZEXEC_') or die();
 
 include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
-include_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
+require_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
 
 /**
  * Groups Plugin class for publications
