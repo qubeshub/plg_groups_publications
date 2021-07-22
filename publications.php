@@ -325,7 +325,10 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					Request::setVar('noview', 1);
 					
 					// Instantiate the controller and have it execute (base_path needed so view knows where template files are located)
-					$newtest = new \Components\Publications\Site\Controllers\Publications(array('base_path'=>\Component::path('com_publications') . DS . 'site'));
+					$newtest = new \Components\Publications\Site\Controllers\Publications(
+						array('base_path' => \Component::path('com_publications') . DS . 'site',
+							  'group' => $this->_group)
+					);
 					$newtest->execute();
 					
 					// Set up the return for the plugin 'view'
