@@ -8,14 +8,13 @@
 // No direct access
 defined('_HZEXEC_') or die();
 
-include_once \Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
-
-use Components\Publications\Tables\Publication as Publicationtable;
+include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
+include_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
 
 /**
  * Groups Plugin class for publications
  */
-class plgGroupsPublications extends \Hubzero\Plugin\Plugin
+class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 {
 	
 	/**
@@ -24,21 +23,14 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @var  boolean
 	 */
 	protected $_autoloadLanguage = true;
-	
+
 	/**
-	 * Component name
+	 * Publications areas
 	 *
-	 * @var  string
+	 * @var array
 	 */
-	protected $_option = 'com_groups';
-	
-	/**
-	 * Store internal message
-	 *
-	 * @var	 array
-	 */
-	protected $_msg = null;
-	
+	private $_areas = null;
+
 	/**
 	 * Categories
 	 *
@@ -52,14 +44,14 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 * @var array
 	 */
 	protected $_total = null;
-	
+
 	/**
-	 * Publications areas
-	 *
-	 * @var array
+	 * Active group
+	 * 
+	 * @var string
 	 */
-	private $_areas = null;
-	
+	protected $_group = null;
+
 	/**
 	 * Loads the plugin language file
 	 *
@@ -87,23 +79,20 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		|| $lang->load(strtolower($extension), PATH_CORE . DS . 'plugins' . DS . $this->_type . DS . $this->_name, null, false, true);
 	}
 	
-	
 	/**
 	 * Return the alias and name for this category of content name. changed from on ProjectAreas to onGroupAreas
 	 *
 	 * @return     array
 	 */
-	
 	public function &onGroupAreas()
 	{
 		$area = array(
-			'name'    => 'publications',
-			'title'   => Lang::txt('PLG_GROUPS_PUBLICATIONS'),
+			'name'             => 'publications',
+			'title'            => Lang::txt('PLG_GROUPS_PUBLICATIONS'),
 			'default_access'   => $this->params->get('plugin_access', 'members'), //changed, line from resources.php, fixes default access error
 			'display_menu_tab' => $this->params->get('display_tab', 1),
-			'icon'    => 'f053'
-		);
-		
+			'icon'             => 'f02d'
+		);		
 		return $area;
 	}
 	
@@ -122,7 +111,9 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 */
 	public function onGroup($group, $option, $authorized, $limit=0, $limitstart=0, $action='', $access, $areas=null)
 	{
-		$this->group = $group;
+		if (empty($this->_group)) {
+			$this->_group = $group;
+		}
 		$return = 'html';
 		$active = 'publications';
 		
@@ -151,36 +142,33 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		
 		if ($return == 'html')
 		{
-			//if set to nobody make sure they cant access TODO
-			// if ($group_plugin_acl == 'nobody')
-			// {
-			// 	$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_OFF', ucfirst($active)) . '</p>';
-			// 	return $arr;
-			// }
+			// if set to nobody make sure cant access
+			if ($group_plugin_acl == 'nobody')
+			{
+				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_OFF', ucfirst($active)) . '</p>';
+				return $arr;
+			}
 			
-			//check if guest and force login if plugin access is registered or members
-			// if (User::isGuest()
-			//  && ($group_plugin_acl == 'registered' || $group_plugin_acl == 'members'))
-			// {
-			// 	$area = Request::getWord('area', 'publications');//changed from 'resources' to 'publications'
-			// 	$url = Route::url('index.php?option=com_groups&cn=' . $group->get('cn') . '&active=' . $active . '&area=' . $area);
+			// check if guest and force login if plugin access is registered or members
+			if (User::isGuest() && ($group_plugin_acl == 'registered' || $group_plugin_acl == 'members'))
+			{
+				$area = Request::getWord('area', 'publications');
+				$url = Route::url('index.php?option=com_groups&cn=' . $group->get('cn') . '&active=' . $active . '&area=' . $area);
 			
-			// 	App::redirect(
-			// 		Route::url('index.php?option=com_users&view=login&return=' . base64_encode($url)),
-			// 		Lang::txt('GROUPS_PLUGIN_REGISTERED', ucfirst($active)),
-			// 		'warning'
-			// 	);
-			// 	return;
-			// }
+				App::redirect(
+					Route::url('index.php?option=com_users&view=login&return=' . base64_encode($url)),
+					Lang::txt('GROUPS_PLUGIN_REGISTERED', ucfirst($active)),
+					'warning'
+				);
+				return;
+			}
 			
-			//check to see if user is member and plugin access requires members
-			// if (!in_array(User::get('id'), $members)
-			//  && $group_plugin_acl == 'members'
-			//  && $authorized != 'admin')
-			// {
-			// 	$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MEMBER', ucfirst($active)) . '</p>';
-			// 	return $arr;
-			// }
+			// check to see if user is member and plugin access requires members
+			if (!in_array(User::get('id'), $members) && $group_plugin_acl == 'members' && $authorized != 'admin')
+			{
+				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MEMBER', ucfirst($active)) . '</p>';
+				return $arr;
+			}
 		}
 		
 		$database = App::get('db');
@@ -211,7 +199,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		}
 		
 		// Trigger the functions that return the areas we'll be using
-		$pareas = $this->getPublicationsAreas(); //changed from rareas to pareas and method called
+		$pareas = $this->getPublicationsAreas();
 		
 		// Get the active category
 		$area = Request::getWord('area', 'publications');//changed from resources to publications
@@ -316,97 +304,66 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		switch ($return)
 		{
 			case 'html':
-			// If we have a specific ID and we're a supergroup, serve a publication page inside supergroup template
-			if (Request::getVar('id', Request::getVar('alias', null)) && $this->group->type == 3)
-			{
-				//Uncomment this section below for the not working yet-trying to just replicate the component method
-				// //Load neccesities for com_publications controller
-				$lang = App::get('language');
-				$lang->load('com_publications', \Component::path('com_publications') . DS . 'site');
-				require_once \Component::path('com_publications') . DS .'models' . DS . 'publication.php'; // Mirrors com_resources/models/entry.php
-				require_once \Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php'; // Mirrors com_resources/site/controllers/resources.php
-				require_once \Component::path('com_publications') . DS .'helpers' . DS . 'html.php'; // Mirrors com_resources/helpers/html.php
-				// //require_once Component::path('com_publications') . DS .'helpers' . DS . 'utilities.php';//replaced helper.php with utilities.php
-				// require_once Component::path('com_publications') . DS .'helpers' . DS . 'tags.php';
-				
-				// Set the request up to make it look like a user made the request to the controller
-				Request::setVar('task', 'page');
-				Request::setVar('option', 'com_publications');
-				Request::setVar('active', Request::get('tab_active', 'about'));
-				// Add some extra variables to let the tab view know we need a different base url
-				Request::setVar('tab_active_key', 'tab_active');
-				Request::setVar('tab_base_url', 'index.php?option=' . $this->option . '&cn=' . $this->group->cn . '&active=publications');
-				// Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
-				Request::setVar('noview', 1);
-				
-				// Instantiate the controller and have it execute
-				$newtest = new \Components\Publications\Site\Controllers\Publications(array('base_path'=>\Component::path('com_publications') . DS . 'site'));
-				$newtest->execute(); // This is leaving the group
-				
-				$arr['html'] = $newtest->view->loadTemplate();
-				$arr['metadata']['count'] = $total;
-				
-				// $view = $this->view('result','results');
-				// $view->option = $option;
-				// $view->group = $group;
-				// foreach ($results as $category){
-				// 	$amt = count($category);
-				// 	if ($amt > 0)
-				// 	{
-				// 		foreach ($category as $row)
-				// 		{
-				// 			if ($row->id ==Request::getVar('id', Request::getVar('alias', null))) {
-				// 				$view->row=$row;
-				// 			}
-				// 		}
-				// 	}
-				// }
-				// $view->selectedpub= Request::getVar('id', Request::getVar('alias', null)) ;
-				// $view->sort = $sort;
-				// $view->authorized = $authorized;
-				// $view->access = $access;
-				//
-				// foreach ($this->getErrors() as $error)
-				// {
-				// 	$view->setError($error);
-				// }
-				//
-				// $arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
-				// $arr['html'] = $view->loadTemplate();
-				
-			}
-			else
-			{
-				// Instantiate a vew
-				$view = $this->view('cards', 'results');
-				
-				// Pass the view some info
-				$view->option = $option;
-				$view->group = $group;
-				$view->authorized = $authorized;
-				$view->totals = $totals;
-				$view->results = $results;
-				$view->cats = $cats;
-				$view->active = $active;
-				$view->limitstart = $limitstart;
-				$view->limit = $limit;
-				$view->total = $total;
-				$view->sort = $sort;
-				$view->access = $access;
-				
-				foreach ($this->getErrors() as $error)
+				// If we have a specific ID and we're a supergroup, serve a publication page inside supergroup template
+				if (Request::getVar('id', Request::getVar('alias', null)) && $group->type == 3)
 				{
-					$view->setError($error);
+					// Load neccesities for com_publications controller
+					$lang = App::get('language');
+					$lang->load('com_publications', \Component::path('com_publications') . DS . 'site');
+
+					require_once \Component::path('com_publications') . DS .'models' . DS . 'publication.php';
+					require_once \Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php';
+					require_once \Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
+					
+					// Set the request up to make it look like a user made the request to the controller
+					Request::setVar('task', 'page');
+					Request::setVar('option', 'com_publications');
+					Request::setVar('active', Request::get('tab_active', 'about'));
+					// Add some extra variables to let the tab view know we need a different base url
+					Request::setVar('base_url', 'index.php?option=' . $this->option . '&cn=' . $group->cn . '&active=publications');
+					// Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
+					Request::setVar('noview', 1);
+					
+					// Instantiate the controller and have it execute (base_path needed so view knows where template files are located)
+					$newtest = new \Components\Publications\Site\Controllers\Publications(array('base_path'=>\Component::path('com_publications') . DS . 'site'));
+					$newtest->execute();
+					
+					// Set up the return for the plugin 'view'
+					$arr['html'] = $newtest->view->loadTemplate();
+					$arr['metadata']['count'] = $total;
 				}
-				
-				// Return the output
-				$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
-				$arr['html'] = $view->loadTemplate();
-			}
+				else
+				{
+					// Instantiate a vew
+					$view = $this->view('cards', 'results');
+					
+					// Pass the view some info
+					$view->option = $option;
+					$view->group = $group;
+					$view->authorized = $authorized;
+					$view->totals = $totals;
+					$view->results = $results;
+					$view->cats = $cats;
+					$view->active = $active;
+					$view->limitstart = $limitstart;
+					$view->limit = $limit;
+					$view->total = $total;
+					$view->sort = $sort;
+					$view->access = $access;
+					
+					foreach ($this->getErrors() as $error)
+					{
+						$view->setError($error);
+					}
+					
+					// Return the output
+					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
+					$arr['html'] = $view->loadTemplate();
+				}
 			break;
 			
 			case 'metadata':
-			$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
+				$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
 			break;
 		}
 		
@@ -423,10 +380,10 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	public function onGroupDelete($group)
 	{
 		// Get all the IDs for resources associated with this group
-		$ids = $this->getResourceIDs($group->get('cn'));
+		$ids = $this->getPublicationIDs($group->get('cn'));
 		
 		// Start the log text
-		$log = Lang::txt('PLG_GROUPS_PUBLICATIONS_LOG') . ': '; //changed from resources to publications
+		$log = Lang::txt('PLG_GROUPS_PUBLICATIONS_LOG') . ': ';
 		if (count($ids) > 0)
 		{
 			$database = App::get('db');
@@ -479,9 +436,9 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		}
 		$database = App::get('db');
 		
-		$rr = new \Components\Publications\Tables\Publication($database);
+		$pr = new \Components\Publications\Tables\Publication($database);
 		
-		$database->setQuery("SELECT id FROM ".$rr->getTableName()." AS p WHERE p.group_owner=".$database->quote($gid));
+		$database->setQuery("SELECT id FROM ".$pr->getTableName()." AS p WHERE p.group_owner=".$database->quote($gid));
 		return $database->loadObjectList();
 	}
 	
@@ -547,26 +504,15 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	 */
 	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all', $areas=null)
 	{
-		// Check if our area is in the array of areas we want to return results for
-		if (is_array($areas) && $limit)
-		{
-			$ars = $this->getPublicationsAreas(); //changed from getResourcesAreas to getPublicationAreas
-			if (!isset($areas[$this->_name])
-			&& !in_array($this->_name, $areas)
-			&& !array_intersect($areas, array_keys($ars['publications'])))//changed from 'resources' to 'publications'
-			{
-				return array();
-			}
-		}
 		// Do we have a member ID?
 		if (!$group->get('cn'))
 		{
 			return array();
 		}
+
 		//access the database
 		$database = App::get('db');
-		//instantiate a table object
-		$pubtable = new plgGroupsPublicationsTablePublication($database);
+
 		//building a query to get the publications deemed by our search terms passed into this function
 		$filters = array();//array that will contain our filters
 		$filters['now'] = \Date::toSQL();
@@ -584,7 +530,6 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
 		//$filters['project']       = $this->model->get('id');
 		$filters['ignore_access'] = 1;
-		$filters['dev']           = 1; // get dev versions
 		$categories = $this->_cats;
 		if (!is_array($categories))
 		{
@@ -620,7 +565,6 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				}
 			}
 			
-			
 			$filters['group_owner'] = $group->get('gidNumber');
 			$filters['sortby'] = 'title';
 			$filters['limit'] = $limit;
@@ -631,11 +575,10 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			{
 				$filters['type'] = $cats[$areas[0]]['id'];
 			}
+
 			// Get results
-			
-			$rows = $pubtable->getRecords($filters);
-			// Did we get any results?
-			// print_r($rows);
+			$pubmodel = new Components\Publications\Models\Publication();
+			$rows = $pubmodel->entries('list', $filters);
 	
 			if ($rows)
 			{
@@ -643,15 +586,19 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 				foreach ($rows as $key => $row)
 				{
 					//if we were a supergroup, this would be different
-					if ($this->group->type == '3')
+					if ($group->type == '3')
 					{
 						if ($row->alias)
 						{
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $this->group->cn . '&active=publications&alias=' . $row->alias);
+							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&alias=' . $row->alias);
 						}
 						else
 						{
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $this->group->cn . '&active=publications&id=' . $row->id);
+							if ($row->lastPublicRelease()) {
+								$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id . '&v=' . $row->lastPublicRelease()->version_number);
+							} else {
+								$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id);
+							}
 						}
 					}
 					else
@@ -710,352 +657,5 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			$this->_total = $counts;
 			return $counts;
 		}
-	}
-}
-
-class plgGroupsPublicationsTablePublication extends Publicationtable
-{
-
-public function getRecords($filters = array(), $admin = false)
-	{
-		$sql  = "SELECT V.*, C.id as id, C.category, C.project_id, C.access as master_access,
-				C.checked_out, C.checked_out_time, C.rating as master_rating,
-				C.group_owner, C.master_type, C.master_doi,
-				C.ranking as master_ranking, C.times_rated as master_times_rated,
-				C.alias, V.id as version_id, t.name AS cat_name, t.alias as cat_alias,
-				t.url_alias as cat_url, PP.alias as project_alias, PP.title as project_title,
-				PP.state as project_status, PP.private as project_private,
-				PP.provisioned as project_provisioned, MT.alias as base, MT.params as type_params";
-		$sql .= ", (SELECT vv.version_label FROM `#__publication_versions` as vv WHERE vv.publication_id=C.id AND vv.state=3 ORDER BY ID DESC LIMIT 1) AS dev_version_label ";
-
-		$sql .= ", (SELECT COUNT(*) FROM `#__publication_versions` WHERE publication_id=C.id AND state!=3) AS versions ";
-
-		// $sortby  = isset($filters['sortby']) ? $filters['sortby'] : 'title';
-
-		// if ($sortby == 'popularity')
-		// {
-		// 	$sql .= ", (SELECT S.users FROM `#__publication_stats` AS S WHERE S.publication_id=C.id AND S.period=14 ORDER BY S.datetime DESC LIMIT 1) as stat ";
-		// }
-
-		// $sql .= (isset($filters['tag']) && $filters['tag'] != '') ? ", TA.tag, COUNT(DISTINCT TA.tag) AS uniques " : " ";
-		$sql .= $this->buildQuery($filters, $admin);
-		$start = isset($filters['start']) ? $filters['start'] : 0;
-		$sql .= (isset($filters['limit']) && $filters['limit'] > 0) ? " LIMIT " . $start . ", " . $filters['limit'] : "";
-
-		$this->_db->setQuery($sql);
-		return $this->_db->loadObjectList();
-	}
-
-	/**
-	 * Build query
-	 *
-	 * @param      array 		$filters
-	 * @return     query string
-	 */
-	public function buildQuery($filters = array(), $admin = false)
-	{
-		$now 		= Date::toSql();
-		$groupby 	= ' GROUP BY C.id ';
-
-		$project 		= isset($filters['project']) && intval($filters['project']) ? $filters['project'] : "";
-		$dev 			= isset($filters['dev']) && $filters['dev'] == 1 ? 1 : 0;
-		$projects 		= isset($filters['projects']) && !empty($filters['projects']) ? $filters['projects'] : array();
-		$mine 			= isset($filters['mine']) && $filters['mine'] ? $filters['mine'] : 0;
-		$sortby  		= isset($filters['sortby']) ? $filters['sortby'] : 'title';
-
-		$query  = "FROM ";
-		if (isset($filters['tag']) && $filters['tag'] != '')
-		{
-			$query .= "`#__tags_object` AS RTA ";
-			$query .= "INNER JOIN `#__tags` AS TA ON RTA.tagid = TA.id AND RTA.tbl='publications', ";
-		}
-
-		$query .= " `#__publication_versions` as V, `#__projects` as PP,
-				  `#__publication_master_types` AS MT";
-		if (isset($filters['author']) && intval($filters['author']))
-		{
-			$query .= ", `#__publication_authors` as A ";
-		}
-		$query .= ", `$this->_tbl` AS C ";
-
-		$query .= "LEFT JOIN `#__publication_categories` AS t ON t.id=C.category ";
-		$query .= " WHERE V.publication_id=C.id AND MT.id=C.master_type AND PP.id = C.project_id ";
-
-		if ($dev)
-		{
-			// $query .= " AND V.main=1 ";
-			// Not sure why this was included?.
-			// It prevents publications with a draft from being listed to owners inside a project.
-
-			if (isset($filters['status']) && $filters['status'] != 'all')
-			{
-				if (is_array($filters['status']))
-				{
-					$squery = '';
-					foreach ($filters['status'] as $s)
-					{
-						$squery .= "'" . $s . "',";
-					}
-					$squery = substr($squery, 0, strlen($squery) - 1);
-					$query .= " AND (V.state IN (" . $squery . ")) ";
-				}
-				else
-				{
-					$query .= " AND V.state=" . intval($filters['status']);
-				}
-			}
-			if ($mine)
-			{
-				if (count($projects) > 0)
-				{
-					$p_query = '';
-					foreach ($projects as $p)
-					{
-						$p_query .= "'" . $p . "',";
-					}
-					$p_query = substr($p_query, 0, strlen($p_query) - 1);
-					$query .= " AND (C.project_id IN (" . $p_query . ")) ";
-				}
-				else
-				{
-					$query .= "AND C.created_by=" . intval($filters['mine']);
-				}
-			}
-			// Individual assigned curator?
-			if (isset($filters['curator']))
-			{
-				if ($filters['curator'] == 'owner')
-				{
-					$query .=" AND V.curator = " . User::get('id');
-				}
-				if ($filters['curator'] == 'other')
-				{
-					$query .=" AND V.curator != " . User::get('id');
-				}
-			}
-			// Make sure we get the max version
-			$query .= " AND V.id = (SELECT MAX(wv2.id) FROM `#__publication_versions` AS wv2 WHERE wv2.publication_id = C.id)";
-		}
-		else
-		{
-			$query .= " AND V.version_number = (SELECT MAX(version_number) FROM `#__publication_versions`
-						WHERE publication_id=C.id AND state=1 ) AND (V.state=1";
-			if (count($projects) > 0)
-			{
-				$p_query = '';
-				foreach ($projects as $p)
-				{
-					$p_query .= "'" . $p . "',";
-				}
-				$p_query = substr($p_query, 0, strlen($p_query) - 1);
-				$query .= " OR (C.project_id IN (" . $p_query . ") AND V.state != 3 AND V.state != 2) ";
-			}
-			$query .= ") ";
-		}
-
-		$query .= $project ? " AND C.project_id=".$project : "";
-
-		// Category
-		if (isset($filters['category']) && $filters['category'] != '')
-		{
-			if (is_numeric($filters['category']))
-			{
-				$query .= " AND C.category=" . $filters['category']." ";
-			}
-			else
-			{
-				$query .= " AND t.url_alias='" . $filters['category']."' ";
-			}
-		}
-		// group owner - either owned directly by group, or within project owned by group
-		if (isset($filters['group_owner']) && $filters['group_owner'] != '')
-		{
-			$query .= " AND (C.group_owner=" . $filters['group_owner']." OR PP.owned_by_group=" . $filters['group_owner'].") ";
-
-		}
-		if (isset($filters['author']) && intval($filters['author']))
-		{
-			$query .= " AND A.publication_version_id=V.id AND A.user_id=" . $filters['author'];
-			$query .= " AND A.status=1 AND (A.role IS NULL OR A.role!='submitter') ";
-		}
-
-
-
-		// Master type
-		if (isset($filters['master_type']) && $filters['master_type'] != '')
-		{
-			if (is_array($filters['master_type']) && !empty($filters['master_type']))
-			{
-				$tquery = '';
-				foreach ($filters['master_type'] as $type)
-				{
-					$tquery .= "'" . $type . "',";
-				}
-				$tquery = substr($tquery, 0, strlen($tquery) - 1);
-				$query .= " AND ((C.master_type IN (" . $tquery . ")) ";
-			}
-			elseif (is_numeric($filters['master_type']))
-			{
-				$query .= " AND (C.master_type=" . $filters['master_type']." ";
-			}
-			elseif (is_string($filters['master_type']))
-			{
-				$query .= " AND (MT.alias='" . $filters['master_type']."' ";
-			}
-			else
-			{
-				$query .= " AND (1=1";
-			}
-			$query .= " OR V.curator = " . User::get('id') . ") ";
-		}
-
-		if (isset($filters['minranking']) && $filters['minranking'] != '' && $filters['minranking'] > 0)
-		{
-			$query .= " AND C.ranking > " . $filters['minranking']." ";
-		}
-		if (!$dev)
-		{
-			$query .= " AND (V.published_up = '0000-00-00 00:00:00' OR V.published_up <= '" . $now . "') ";
-			$query .= " AND (V.published_down IS NULL OR V.published_down = '0000-00-00 00:00:00' OR V.published_down >= '".$now."') ";
-		}
-		if (isset($filters['startdate']))
-		{
-			$query .= "AND V.published_up > " . $this->_db->quote($filters['startdate']) . " ";
-		}
-		if (isset($filters['enddate']))
-		{
-			$query .= "AND V.published_up < " . $this->_db->quote($filters['enddate']) . " ";
-		}
-		if (isset($filters['search']) && $filters['search'] != '')
-		{
-				$words = array();
-				$ws = explode(' ', $filters['search']);
-				foreach ($ws as $w)
-				{
-					$w = trim($w);
-					if (strlen($w) > 2)
-					{
-						$words[] = $w;
-					}
-				}
-				$text = implode(' +', $words);
-				$text = addslashes($text);
-				$text2 = str_replace('+', '', $text);
-
-				$query .= " AND ((MATCH(V.title) AGAINST ('+$text -\"$text2\"') > 0) OR"
-						 . " (MATCH(V.abstract,V.description) AGAINST ('+$text -\"$text2\"') > 0)) ";
-		}
-
-		// Do not show deleted
-		if ($admin == false || (isset($filters['status']) && $filters['status'] != 2))
-		{
-			$query .= " AND V.state != 2 ";
-		}
-
-		if (!isset($filters['ignore_access']) || $filters['ignore_access'] == 0)
-		{
-			$query .= " AND (V.access != 2)  ";
-		}
-		if (isset($filters['tag']) && $filters['tag'] != '')
-		{
-			include_once(PATH_CORE . DS . 'components' . DS . 'com_publications' . DS . 'helpers' . DS . 'tags.php');
-			$tagging = new \Components\Publications\Helpers\Tags($this->_db);
-			$tags = $tagging->_parse_tags($filters['tag']);
-
-			$query .= "AND RTA.objectid=C.id AND TA.tag IN ('" . implode("','", $tags) . "')";
-			$groupby = " GROUP BY C.id HAVING uniques=".count($tags);
-		}
-
-		$query .= $groupby;
-		if (!isset($filters['count']) or $filters['count'] == 0)
-		{
-			$query  .= " ORDER BY ";
-			$sortdir = isset($filters['sortdir']) && strtoupper($filters['sortdir']) == 'DESC'  ? 'DESC' : 'ASC';
-
-			switch ($sortby)
-			{
-				case 'date':
-				case 'date_published':
-					$query .= 'V.published_up DESC';
-
-					break;
-
-				case 'date_oldest':
-					$query .= 'V.published_up ASC';
-
-					break;
-
-				case 'date_accepted':
-					$query .= 'V.accepted DESC';
-					break;
-
-				case 'date_created':
-					$query .= 'C.created DESC';
-					break;
-
-				case 'date_version_created':
-					$query .= 'V.created DESC';
-					break;
-
-				case 'date_modified':
-					$query .= 'V.modified DESC';
-					break;
-
-				case 'title':
-				default:
-					$query .= 'V.title ' . $sortdir . ', V.version_number DESC';
-					break;
-
-				case 'id':
-					$query .= 'C.id '.$sortdir;
-					break;
-
-				case 'mine':
-					$query .= 'PP.provisioned DESC, V.title ' . $sortdir . ', V.version_number DESC';
-					break;
-
-				case 'rating':
-					$query .= "C.rating DESC, C.times_rated DESC";
-					break;
-
-				case 'ranking':
-					$query .= "C.ranking DESC";
-					break;
-
-				case 'project':
-					$query .= "PP.title " . $sortdir;
-					break;
-
-				case 'version_ranking':
-					$query .= "V.ranking DESC";
-					break;
-
-				case 'popularity':
-					$query .= "stat DESC, V.published_up ASC";
-					break;
-
-				case 'category':
-					$query .= "C.category " . $sortdir;
-					break;
-
-				case 'type':
-					$query .= "C.master_type " . $sortdir;
-					break;
-
-				case 'status':
-					$query .= "V.state " . $sortdir;
-					break;
-
-				case 'random':
-					$query .= "RAND()";
-					break;
-
-				case 'submitted':
-					$query .= "V.submitted " . $sortdir;
-					break;
-			}
-		}
-
-		return $query;
 	}
 }
