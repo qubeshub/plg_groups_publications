@@ -11,6 +11,8 @@ defined('_HZEXEC_') or die();
 include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
 require_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
 
+use Components\Publications\Tables\MasterType;
+
 /**
  * Groups Plugin class for publications
  */
@@ -48,9 +50,16 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	/**
 	 * Active group
 	 * 
-	 * @var string
+	 * @var object
 	 */
 	protected $_group = null;
+
+	/**
+	 * Master type
+	 * 
+	 * @var object
+	 */
+	protected $_master_type = null;
 
 	/**
 	 * Loads the plugin language file
@@ -173,6 +182,10 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		
 		$database = App::get('db');
 		
+		// get a master type (if available)
+		$this->_master_type = new MasterType($database);
+		$this->_master_type->loadByOwnerGroup($group->get('gidNumber'));
+
 		// Incoming paging vars
 		$sort = Request::getVar('sort', 'date');
 		if (!in_array($sort, array('date', 'title', 'ranking', 'rating')))
@@ -533,6 +546,9 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
 		//$filters['project']       = $this->model->get('id');
 		$filters['ignore_access'] = 1;
+		if ($this->_master_type->id) {
+			$filters['master_type'] = $this->_master_type->id;
+		}
 		$categories = $this->_cats;
 		if (!is_array($categories))
 		{
