@@ -8,10 +8,11 @@
 // No direct access
 defined('_HZEXEC_') or die();
 
+use Hubzero\Pagination\Paginator;
+use Components\Publications\Tables\MasterType;
+
 include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
 require_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
-
-use Components\Publications\Tables\MasterType;
 
 /**
  * Groups Plugin class for publications
@@ -40,13 +41,6 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	 */
 	private $_cats  = null;
 	
-	/**
-	 * Count for record
-	 *
-	 * @var array
-	 */
-	protected $_total = null;
-
 	/**
 	 * Active group
 	 * 
@@ -98,7 +92,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$area = array(
 			'name'             => 'publications',
 			'title'            => Lang::txt('PLG_GROUPS_PUBLICATIONS'),
-			'default_access'   => $this->params->get('plugin_access', 'members'), //changed, line from resources.php, fixes default access error
+			'default_access'   => $this->params->get('plugin_access', 'members'),
 			'display_menu_tab' => $this->params->get('display_tab', 1),
 			'icon'             => 'f02d'
 		);		
@@ -131,7 +125,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			'html'=>''
 		);
 		
-		//get this area details
+		// get this area details
 		$this_area = $this->onGroupAreas();
 		
 		// Check if our area is in the array of areas we want to return results for
@@ -198,7 +192,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$access = 'date';
 		}
 		
-		$config = Component::params('com_publications');//changed from com_resources to com_publications
+		$config = Component::params('com_publications');
 		if ($return == 'metadata')
 		{
 			if ($config->get('show_ranking'))
@@ -211,21 +205,6 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			}
 		}
 		
-		// Trigger the functions that return the areas we'll be using
-		$pareas = $this->getPublicationsAreas();
-		
-		// Get the active category
-		$area = Request::getWord('area', 'publications');//changed from resources to publications
-		if ($area)
-		{
-			$activeareas = array($area);
-		}
-		else
-		{
-			$limit = 5;
-			$activeareas = $pareas;
-		}
-		
 		if ($return == 'metadata')
 		{
 			$ls = -1;
@@ -235,84 +214,18 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$ls = $limitstart;
 		}
 		
-		// Get the search result totals
-		$ts = $this->getPublications(
-			$group,
-			$authorized,
-			0,
-			$ls,
-			$sort,
-			$access,
-			$activeareas
-		);
-		$totals = array($ts);
-		
-		// Get the total results found (sum of all categories)
-		$i = 0;
-		$total = 0;
-		$cats = array();
-		foreach ($pareas as $c => $t)
-		{
-			$cats[$i]['category'] = $c;
-			
-			// Do sub-categories exist?
-			if (is_array($t) && !empty($t))
-			{
-				// They do - do some processing
-				$cats[$i]['title'] = ucfirst($c);
-				$cats[$i]['total'] = 0;
-				$cats[$i]['_sub']  = array();
-				$z = 0;
-				// Loop through each sub-category
-				foreach ($t as $s => $st)
-				{
-					// Ensure a matching array of totals exist
-					if (is_array($totals[$i]) && !empty($totals[$i]) && isset($totals[$i][$z]))
-					{
-						// Add to the parent category's total
-						$cats[$i]['total'] = $cats[$i]['total'] + $totals[$i][$z];
-						// Get some info for each sub-category
-						$cats[$i]['_sub'][$z]['category'] = $s;
-						$cats[$i]['_sub'][$z]['title']    = $st;
-						$cats[$i]['_sub'][$z]['total']    = $totals[$i][$z];
-					}
-					$z++;
-				}
-			}
-			else
-			{
-				// No sub-categories - this should be easy
-				$cats[$i]['title'] = $t;
-				$cats[$i]['total'] = (!is_array($totals[$i])) ? $totals[$i] : 0;
-			}
-			
-			// Add to the overall total
-			$total = $total + intval($cats[$i]['total']);
-			$i++;
-		}
-		
-		// Do we have an active area?
-		if (count($activeareas) == 1 && !is_array(current($activeareas)))
-		{
-			$active = $activeareas[0];
-		}
-		else
-		{
-			$active = '';
-		}
-		
 		// Get the search results THIS is where search the database r
-		$r = $this->getPublications(//changed from getResources to getPublications
+		$r = $this->getPublications(
 			$group,
 			$authorized,
 			$limit,
 			$limitstart,
 			$sort,
-			$access,
-			$activeareas
+			$access
 		);
 		$results = array($r);
-		
+		$total = count($results[0]);
+
 		// Build the output
 		switch ($return)
 		{
@@ -349,32 +262,51 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					$arr['metadata']['count'] = $total;
 				}
 				else
-				{
+				{			
 					// Instantiate a vew
-					$view = $this->view('cards', 'results');
-					
+					$no_html = Request::getInt('no_html', 0);
+					$view = $this->view((!$no_html ? 'default' : 'cards'), 'results');
+				
 					// Pass the view some info
 					$view->option = $option;
 					$view->group = $group;
 					$view->authorized = $authorized;
-					$view->totals = $totals;
 					$view->results = $results;
-					$view->cats = $cats;
 					$view->active = $active;
 					$view->limitstart = $limitstart;
 					$view->limit = $limit;
 					$view->total = $total;
 					$view->sort = $sort;
 					$view->access = $access;
+
+					// Initiate paging
+					$pageNav = new Paginator(
+						$total,
+						$limitstart,
+						$limit
+					);
+					$view->pageNav = $pageNav;
 					
 					foreach ($this->getErrors() as $error)
 					{
 						$view->setError($error);
 					}
-					
+
 					// Return the output
-					$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
-					$arr['html'] = $view->loadTemplate();
+					if (!$no_html) {
+						$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
+						$arr['html'] = $view->loadTemplate();
+					} else {
+						$response = Array(
+							'status' => \App::get('notification')->messages(),
+							'html' => $view->loadTemplate()
+						);
+
+						// Ugly brute force method of cleaning output
+						ob_clean();
+						echo json_encode($response);
+						exit();
+					}
 				}
 			break;
 			
@@ -388,125 +320,6 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	}
 	
 	/**
-	 * Remove any associated resources when group is deleted
-	 *
-	 * @param      object $group Group being deleted
-	 * @return     string Log of items removed
-	 */
-	public function onGroupDelete($group)
-	{
-		// Get all the IDs for resources associated with this group
-		$ids = $this->getPublicationIDs($group->get('cn'));
-		
-		// Start the log text
-		$log = Lang::txt('PLG_GROUPS_PUBLICATIONS_LOG') . ': ';
-		if (count($ids) > 0)
-		{
-			$database = App::get('db');
-			
-			// Loop through all the IDs for resources associated with this group
-			foreach ($ids as $id)
-			{
-				// Disassociate the resource from the group and unpublish it
-				$rr = new \Components\Publications\Tables\Publication($database); //changed from \Components\Resources\Tables\Resource($database);
-				$rr->load($id->id);
-				$rr->group_owner = '';
-				$rr->published = 0;
-				$rr->store();
-				
-				// Add the page ID to the log
-				$log .= $id->id . ' ' . "\n";
-			}
-		}
-		else
-		{
-			$log .= Lang::txt('PLG_GROUPS_PUBLICATIONS_NONE') . "\n"; //changed from PLG_GROUPS_RESOURCES_NONE to PLG_GROUPS_RESOURCES_NONE
-		}
-		
-		// Return the log
-		return $log;
-	}
-	
-	/**
-	 * Return a count of items that will be removed when group is deleted
-	 *
-	 * @param      object $group Group to delete
-	 * @return     string
-	 */
-	public function onGroupDeleteCount($group)
-	{
-		return Lang::txt('PLG_GROUPS_PUBLICATIONS_LOG') . ': ' . count($this->getPublicationIDs($group->get('cn')));
-	}
-	
-	/**
-	 * Get a list of publication IDs associated with this group
-	 *
-	 * @param      string $gid Group alias
-	 * @return     array
-	 */
-	private function getPublicationIDs($gid=null)
-	{
-		if (!$gid)
-		{
-			return array();
-		}
-		$database = App::get('db');
-		
-		$pr = new \Components\Publications\Tables\Publication($database);
-		
-		$database->setQuery("SELECT id FROM ".$pr->getTableName()." AS p WHERE p.group_owner=".$database->quote($gid));
-		return $database->loadObjectList();
-	}
-	
-	/**
-	 * Get a list of Publications Areas
-	 */
-	public function getPublicationsAreas()
-	{
-		$areas = $this->_areas;
-		if (is_array($areas))
-		{
-			return $areas;
-		}
-		//MAKING AN ARRAY TO PASS IN TO GET CATEGORIES, different way of doing things than resources
-		$filters = array();
-		$filters['limit']         = Request::getInt('limit', Config::get('list_limit'));
-		$filters['start']         = Request::getInt('limitstart', 0);
-		$filters['sortby']        = Request::getVar('sortby', 'title');
-		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
-		//$filters['project']       = $this->model->get('id');
-		$filters['ignore_access'] = 1;
-		$filters['dev']           = 1; // get dev versions
-		$categories = $this->_cats;
-		if (!is_array($categories))
-		{
-			// 	// Get categories
-			// 	$database = App::get('db');
-			// 	$rt = new \Components\Publications\Tables\Category($database);//changed from components\resources\tables\type
-			// 	$categories = $rt->getCategories($filters);
-			// 	$this->_cats = $categories;
-		}
-		
-		// // Normalize the category names
-		// // e.g., "Oneline Presentations" -> "onlinepresentations"
-		$cats = array();
-		for ($i = 0; $i < count($categories); $i++)
-		{
-			// 	$normalized = preg_replace("/[^a-zA-Z0-9]/", '', $categories[$i]->getCategory());
-			// 	$normalized = strtolower($normalized);
-			
-			// 	//$categories[$i]->title = $normalized;
-			$cats[$normalized] = $categories[$i]/*->type*/;
-		}
-		
-		$areas = array(
-			'publications' => $cats //changed from resources to publications
-		);
-		$this->_areas = $areas;
-		return $areas;
-	}
-	
-	/**
 	 * Retrieve records for items associated with this group
 	 *
 	 * @param      object  $group      Group that owns the records
@@ -515,10 +328,9 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	 * @param      integer $limitstart SQL record limit start
 	 * @param      string  $sort       The field to sort records by
 	 * @param      string  $access     Access level
-	 * @param      mixed   $areas      An array or string of areas that should retrieve records
 	 * @return     mixed Returns integer when counting records, array when retrieving records
 	 */
-	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all', $areas=null)
+	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all')
 	{
 		// Do we have a member ID?
 		if (!$group->get('cn'))
@@ -526,155 +338,74 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			return array();
 		}
 
-		//access the database
 		$database = App::get('db');
 
-		//building a query to get the publications deemed by our search terms passed into this function
-		$filters = array();//array that will contain our filters
-		$filters['now'] = \Date::toSQL();
-		$filters['sortby'] = $sort;
-		$filters['group'] = $group->get('cn');
-		$filters['access'] = $access;
-		$filters['authorized'] = $authorized;
-		$filters['state'] = array(1);
-		//get categories of project
-		
 		$filters = array();
+		$filters['state']         = 1;
 		$filters['limit']         = Request::getInt('limit', Config::get('list_limit'));
 		$filters['start']         = Request::getInt('limitstart', 0);
 		$filters['sortby']        = Request::getVar('sortby', 'title');
 		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
-		//$filters['project']       = $this->model->get('id');
 		$filters['ignore_access'] = 1;
 		if ($this->_master_type->id) {
 			$filters['master_type'] = $this->_master_type->id;
 		}
-		$categories = $this->_cats;
-		if (!is_array($categories))
-		{
-			// Get categories
-			$database = App::get('db');
-			$rt = new \Components\Publications\Tables\Category($database);//changed from components\resources\tables\type
-			$categories = $rt->getCategories($filters);
-			$this->_cats = $categories;
-		}
-		$cats = array();
-		// for ($i = 0; $i < count($categories); $i++)
-		// {
-		// 	$normalized = preg_replace("/[^a-zA-Z0-9]/", '', $categories[$i]->type);
-		// 	$normalized = strtolower($normalized);
-		// 	$cats[$normalized] = array();
-		// 	$cats[$normalized]['id'] = $categories[$i]->id;
-		// }
 		
-		if ($limit)
-		{
-			if ($this->_total != null)
-			{
-				$total = 0;
-				$t = $this->_total;
-				foreach ($t as $l)
-				{
-					$total += $l;
-				}
-				// } CHANGED made below if statement included in above if statement
-				if ($total == 0)
-				{
-					return array();
-				}
-			}
-			
-			$filters['group_owner'] = $group->get('gidNumber');
-			$filters['sortby'] = 'title';
-			$filters['limit'] = $limit;
-			$filters['limitstart'] = $limitstart;
-			// Check the area of return. If we are returning results for a specific area/category
-			// we'll need to modify the query a bit
-			if (count($areas) == 1 && !isset($areas['publications']) && $areas[0] != 'publications')
-			{
-				$filters['type'] = $cats[$areas[0]]['id'];
-			}
+		// Tags and keywords
+		$tags = Request::getVar('tags', array(), 'post', 'none', 2);
+		if ($tags) {
+			$filters['tag'] = $tags;
+		}
+		$no_html = Request::getInt('no_html', 0);
+		if ($no_html && $_POST['keywords']) {
+			$keywords = preg_split('/,\s*/', $_POST['keywords']);
+			$filters['tag'] = array_merge($keywords, ($tags ? $tags : array()));
+		}
+		
+		$filters['group_owner'] = $group->get('gidNumber');
+		$filters['sortby'] = 'title';
+		$filters['limit'] = $limit;
+		$filters['limitstart'] = $limitstart;
 
-			// Get results
-			$pubmodel = new Components\Publications\Models\Publication();
-			$rows = $pubmodel->entries('list', $filters);
-	
-			if ($rows)
+		// Get results
+		$pubmodel = new Components\Publications\Models\Publication();
+		$rows = $pubmodel->entries('list', $filters);
+
+		if ($rows)
+		{
+			// Loop through the results and set each item's HREF
+			foreach ($rows as $key => $row)
 			{
-				// Loop through the results and set each item's HREF
-				foreach ($rows as $key => $row)
+				//if we were a supergroup, this would be different
+				if ($group->type == '3')
 				{
-					//if we were a supergroup, this would be different
-					if ($group->type == '3')
+					if ($row->alias)
 					{
-						if ($row->alias)
-						{
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&alias=' . $row->alias);
-						}
-						else
-						{
-							if ($row->lastPublicRelease()) {
-								$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id . '&v=' . $row->lastPublicRelease()->version_number);
-							} else {
-								$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id);
-							}
-						}
+						$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&alias=' . $row->alias);
 					}
 					else
 					{
-						if ($row->alias)
-						{
-							$rows[$key]->href = Route::url('index.php?option=com_publications&alias=' . $row->alias);
-						}
-						else //most common case
-						{
-							$rows[$key]->href = Route::url('index.php?option=com_publications&id=' . $row->id);
+						if ($row->lastPublicRelease()) {
+							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id . '&v=' . $row->lastPublicRelease()->version_number);
+						} else {
+							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id);
 						}
 					}
 				}
-			}
-			// Return the results
-			return $rows;
-		}
-		else
-		{
-			$filters['select'] = 'count';
-			// Get a count
-			$counts = array();
-			$ares = $this->getPublicationsAreas();
-			foreach ($ares as $area => $val)
-			{
-				if (is_array($val))
+				else
 				{
-					$i = 0;
-					foreach ($val as $a=>$t)
+					if ($row->alias)
 					{
-						if ($limitstart == -1)
-						{
-							if ($i == 0)
-							{
-								$database->setQuery($rr->buildPluginQuery($filters));
-								$counts[] = $database->loadResult();
-							}
-							else
-							{
-								$counts[] = 0;
-							}
-						}
-						else
-						{
-							$filters['type'] = $cats[$a]['id'];
-							// Execute a count query for each area/category
-							$database->setQuery($rr->buildPluginQuery($filters));
-							$counts[] = $database->loadResult();
-						}
-						$i++;
+						$rows[$key]->href = Route::url('index.php?option=com_publications&alias=' . $row->alias);
+					}
+					else //most common case
+					{
+						$rows[$key]->href = Route::url('index.php?option=com_publications&id=' . $row->id);
 					}
 				}
 			}
-			// Return the counts
-			$this->_total = $counts;
-			return $counts;
 		}
+		// Return the results
+		return $rows;
 	}
 }
