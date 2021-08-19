@@ -14,53 +14,6 @@ $config = Component::params('com_publications');
 // An array for storing all the links we make
 $links = array();
 $html = '';
-if ($this->cats)
-{
-	// Loop through each category
-	foreach ($this->cats as $cat)
-	{
-		// Only show categories that have returned search results
-		if ($cat['total'] > 0)
-		{
-			// Is this the active category?
-			$a = ($cat['category'] == $this->active) ? ' class="active"' : '';
-			// If we have a specific category, prepend it to the search term
-			$blob = ($cat['category']) ? $cat['category'] : '';
-			// Build the HTML
-			$l = "\t" . '<li' . $a . '><a href="' . Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area='. urlencode(stripslashes($blob))) . '">' . $this->escape(stripslashes($cat['title'])) . ' <span class="item-count">' . $cat['total'] . '</span></a>';
-			// Are there sub-categories?
-			if (isset($cat['_sub']) && is_array($cat['_sub']))
-			{
-				// An array for storing the HTML we make
-				$k = array();
-				// Loop through each sub-category
-				foreach ($cat['_sub'] as $subcat)
-				{
-					// Only show sub-categories that returned search results
-					if ($subcat['total'] > 0)
-					{
-						// Is this the active category?
-						$a = ($subcat['category'] == $this->active) ? ' class="active"' : '';
-						// If we have a specific category, prepend it to the search term
-						$blob = ($subcat['category']) ? $subcat['category'] : '';
-						// Build the HTML
-						$k[] = "\t\t\t" . '<li' . $a . '><a href="' . Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area='. urlencode(stripslashes($blob))) . '">' . $this->escape(stripslashes($subcat['title'])) . ' <span class="item-count">' . $subcat['total'] . '</span></a></li>';
-					}
-				}
-				// Do we actually have any links?
-				// NOTE: this method prevents returning empty list tags "<ul></ul>"
-				if (count($k) > 0)
-				{
-					$l .= "\t\t" . '<ul>' . "\n";
-					$l .= implode("\n", $k);
-					$l .= "\t\t" . '</ul>' . "\n";
-				}
-			}
-			$l .= '</li>';
-			$links[] = $l;
-		}
-	}
-}
 ?>
 
 <?php if ($this->group->published == 1) { ?>
@@ -78,37 +31,6 @@ if ($this->cats)
 
 		<div class="container">
 			<nav class="entries-filters">
-				<ul class="entries-menu filter-options">
-					<?php if (count($links) > 0) { ?>
-						<li class="filter-categories">
-							<a href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=' . $this->sort . '&access=' . $this->active); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_CATEGORIES'); ?></a>
-							<ul>
-								<?php echo implode("\n", $links); ?>
-							</ul>
-						</li>
-					<?php } ?>
-					<li>
-						<a<?php echo ($this->access == 'all') ? ' class="active"' : ''; ?> href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=' . $this->sort . '&access=all'); ?>">
-							<?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_ACCESS_ALL'); ?>
-						</a>
-					</li>
-					<li>
-						<a<?php echo ($this->access == 'public') ? ' class="active"' : ''; ?> href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=' . $this->sort . '&access=public'); ?>">
-							<?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_ACCESS_PUBLIC'); ?>
-						</a>
-					</li>
-					<li>
-						<a<?php echo ($this->access == 'protected') ? ' class="active"' : ''; ?> href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=' . $this->sort . '&access=protected'); ?>">
-							<?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_ACCESS_PROTECTED'); ?>
-						</a>
-					</li>
-					<li>
-						<a<?php echo ($this->access == 'private') ? ' class="active"' : ''; ?> href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=' . $this->sort . '&access=private'); ?>">
-							<?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_ACCESS_PRIVATE'); ?>
-						</a>
-					</li>
-				</ul>
-
 				<ul class="entries-menu">
 					<li><a<?php echo ($this->sort == 'date') ? ' class="active"' : ''; ?> href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=date&access=' . $this->access); ?>" title="Sort by newest to oldest">&darr; <?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_SORT_BY_DATE'); ?></a></li>
 					<li><a<?php echo ($this->sort == 'title') ? ' class="active"' : ''; ?> href="<?php echo Route::url('index.php?option=' . $this->option . '&cn=' . $this->group->get('cn') . '&active=publications&area=' . urlencode(stripslashes($this->active)) . '&sort=title&access=' . $this->access); ?>" title="Sort by title">&darr; <?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_SORT_BY_TITLE'); ?></a></li>
@@ -145,17 +67,17 @@ if ($this->cats)
 				?>
 			</div><!-- / .container-block -->
 			<?php
-			$pageNav = $this->pagination(
-				$this->total,
-				$this->limitstart,
-				$this->limit
-			);
-			$pageNav->setAdditionalUrlParam('cn', $this->group->get('cn'));
-			$pageNav->setAdditionalUrlParam('active', 'publications');
-			$pageNav->setAdditionalUrlParam('area', urlencode(stripslashes($this->active)));
-			$pageNav->setAdditionalUrlParam('sort', $this->sort);
-			$pageNav->setAdditionalUrlParam('access', $this->access);
-			echo $pageNav->render();
+			// $pageNav = $this->pagination(
+			// 	$this->total,
+			// 	$this->limitstart,
+			// 	$this->limit
+			// );
+			// $pageNav->setAdditionalUrlParam('cn', $this->group->get('cn'));
+			// $pageNav->setAdditionalUrlParam('active', 'publications');
+			// $pageNav->setAdditionalUrlParam('area', urlencode(stripslashes($this->active)));
+			// $pageNav->setAdditionalUrlParam('sort', $this->sort);
+			// $pageNav->setAdditionalUrlParam('access', $this->access);
+			// echo $pageNav->render();
 			?>
 			<div class="clearfix"></div>
 		</div><!-- / .container -->
