@@ -332,7 +332,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	 */
 	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all')
 	{
-		// Do we have a member ID?
+		// Do we have a group cn?
 		if (!$group->get('cn'))
 		{
 			return array();
@@ -349,6 +349,8 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$filters['ignore_access'] = 1;
 		if ($this->_master_type->id) {
 			$filters['master_type'] = $this->_master_type->id;
+		} else {
+			$filters['group_owner'] = $group->get('gidNumber');
 		}
 		
 		// Tags and keywords
@@ -362,7 +364,6 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$filters['tag'] = array_merge($keywords, ($tags ? $tags : array()));
 		}
 		
-		$filters['group_owner'] = $group->get('gidNumber');
 		$filters['sortby'] = 'title';
 		$filters['limit'] = $limit;
 		$filters['limitstart'] = $limitstart;
