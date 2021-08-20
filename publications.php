@@ -26,21 +26,14 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	 * @var  boolean
 	 */
 	protected $_autoloadLanguage = true;
-
-	/**
-	 * Publications areas
-	 *
-	 * @var array
-	 */
-	private $_areas = null;
-
-	/**
-	 * Categories
-	 *
-	 * @var array
-	 */
-	private $_cats  = null;
 	
+	/**
+	 * Tags
+	 * 
+	 * @var object
+	 */
+	protected $_tags = null;
+
 	/**
 	 * Active group
 	 * 
@@ -192,6 +185,11 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$access = 'date';
 		}
 		
+		$this->_tags = Request::getVar('tags', array());
+		if (is_string($this->_tags)) {
+			$this->_tags = preg_split('/,\s*/', $this->_tags);
+		}
+
 		$config = Component::params('com_publications');
 		if ($return == 'metadata')
 		{
@@ -278,6 +276,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					$view->total = $total;
 					$view->sort = $sort;
 					$view->access = $access;
+					$view->tags = $this->_tags;
 
 					// Initiate paging
 					$pageNav = new Paginator(
@@ -354,14 +353,13 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		}
 		
 		// Tags and keywords
-		$tags = Request::getVar('tags', array(), 'post', 'none', 2);
-		if ($tags) {
-			$filters['tag'] = $tags;
+		if ($this->_tags) {
+			$filters['tag'] = $this->_tags;
 		}
 		$no_html = Request::getInt('no_html', 0);
 		if ($no_html && isset($_POST['keywords']) && $_POST['keywords']) {
 			$keywords = preg_split('/,\s*/', $_POST['keywords']);
-			$filters['tag'] = array_merge($keywords, ($tags ? $tags : array()));
+			$filters['tag'] = array_merge($keywords, ($this->_tags ? $this->_tags : array()));
 		}
 		
 		$filters['sortby'] = 'title';
