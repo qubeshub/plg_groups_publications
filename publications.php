@@ -359,7 +359,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$filters['tag'] = $tags;
 		}
 		$no_html = Request::getInt('no_html', 0);
-		if ($no_html && $_POST['keywords']) {
+		if ($no_html && isset($_POST['keywords']) && $_POST['keywords']) {
 			$keywords = preg_split('/,\s*/', $_POST['keywords']);
 			$filters['tag'] = array_merge($keywords, ($tags ? $tags : array()));
 		}
