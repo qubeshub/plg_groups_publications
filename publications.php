@@ -212,6 +212,16 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$ls = $limitstart;
 		}
 		
+		// First, get totals
+		$total = $this->getPublications(
+			$group,
+			$authorized,
+			0,
+			$limitstart,
+			$sort,
+			$access
+		);
+
 		// Get the search results THIS is where search the database r
 		$r = $this->getPublications(
 			$group,
@@ -222,7 +232,6 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$access
 		);
 		$results = array($r);
-		$total = count($results[0]);
 
 		// Build the output
 		switch ($return)
@@ -338,14 +347,12 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		}
 
 		$database = App::get('db');
+		$pubmodel = new Components\Publications\Models\Publication();
 
 		$filters = array();
 		$filters['state']         = 1;
-		$filters['limit']         = Request::getInt('limit', Config::get('list_limit'));
-		$filters['start']         = Request::getInt('limitstart', 0);
-		$filters['sortby']        = Request::getVar('sortby', 'title');
-		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
 		$filters['ignore_access'] = 1;
+
 		if ($this->_master_type->id) {
 			$filters['master_type'] = $this->_master_type->id;
 		} else {
@@ -361,13 +368,18 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$keywords = preg_split('/,\s*/', $_POST['keywords']);
 			$filters['tag'] = array_merge($keywords, ($this->_tags ? $this->_tags : array()));
 		}
-		
-		$filters['sortby'] = 'title';
-		$filters['limit'] = $limit;
-		$filters['limitstart'] = $limitstart;
 
-		// Get results
-		$pubmodel = new Components\Publications\Models\Publication();
+		// Get count only?
+		if (!$limit) {
+			return $pubmodel->entries('count', $filters);
+		}
+
+		// Get records
+		$filters['limit']         = $limit;
+		$filters['start']         = $limitstart;
+		$filters['sortby']        = Request::getVar('sortby', 'title');
+		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
+		
 		$rows = $pubmodel->entries('list', $filters);
 
 		if ($rows)
