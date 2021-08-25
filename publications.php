@@ -35,6 +35,13 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	protected $_tags = null;
 
 	/**
+	 * Tags
+	 * 
+	 * @var object
+	 */
+	protected $_search = null;
+
+	/**
 	 * Active group
 	 * 
 	 * @var object
@@ -190,6 +197,8 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$this->_tags = preg_split('/,\s*/', $this->_tags);
 		}
 
+		$this->_search = Request::getString('search', '');
+
 		$config = Component::params('com_publications');
 		if ($return == 'metadata')
 		{
@@ -201,15 +210,6 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			{
 				$sort = 'rating';
 			}
-		}
-		
-		if ($return == 'metadata')
-		{
-			$ls = -1;
-		}
-		else
-		{
-			$ls = $limitstart;
 		}
 		
 		// First, get totals
@@ -285,6 +285,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					$view->total = $total;
 					$view->sort = $sort;
 					$view->access = $access;
+					$view->search = $this->_search;
 					$view->tags = $this->_tags;
 
 					// Initiate paging
@@ -369,6 +370,11 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$filters['tag'] = array_merge($keywords, ($this->_tags ? $this->_tags : array()));
 		}
 
+		// Text search
+		if ($this->_search) {
+			$filters['search'] = $this->_search;
+		}
+
 		// Get count only?
 		if (!$limit) {
 			return $pubmodel->entries('count', $filters);
@@ -379,6 +385,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$filters['start']         = $limitstart;
 		$filters['sortby']        = Request::getVar('sortby', 'title');
 		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
+		$filters['search']        = Request::getString('search', '');
 		
 		$rows = $pubmodel->entries('list', $filters);
 
