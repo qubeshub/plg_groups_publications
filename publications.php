@@ -249,7 +249,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					require_once \Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
 					
 					// Set the request up to make it look like a user made the request to the controller
-					Request::setVar('task', 'page');
+					Request::setVar('task', 'view');
 					Request::setVar('option', 'com_publications');
 					Request::setVar('active', Request::get('tab_active', 'about'));
 					// Add some extra variables to let the tab view know we need a different base url
@@ -383,8 +383,8 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		// Get records
 		$filters['limit']         = $limit;
 		$filters['start']         = $limitstart;
-		$filters['sortby']        = Request::getVar('sortby', 'title');
-		$filters['sortdir']       = Request::getVar('sortdir', 'ASC');
+		$filters['sortby']        = Request::getVar('sortby', 'date');
+		$filters['sortdir']       = Request::getVar('sortdir', 'DESC');
 		$filters['search']        = Request::getString('search', '');
 		
 		$rows = $pubmodel->entries('list', $filters);
