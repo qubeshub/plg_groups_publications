@@ -180,16 +180,21 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$this->_master_type = new MasterType($database);
 		$this->_master_type->loadByOwnerGroup($group->get('gidNumber'));
 
+		$this->_search = Request::getString('search', '');
+		
 		// Incoming paging vars
-		$sort = Request::getVar('sort', 'date');
-		if (!in_array($sort, array('date', 'title', 'ranking', 'rating')))
+		$sort = Request::getVar('sort', 'relevance');
+		if (!in_array($sort, array('relevance', 'date', 'views', 'downloads')))
 		{
-			$sort = 'date';
+			$sort = 'relevance';
 		}
+		// Relevance = date when search is empty
+		$sortby = ($sort == 'relevance' && !$this->_search ? 'date' : $sort);
+		
 		$access = Request::getVar('access', 'all');
 		if (!in_array($access, array('all', 'public', 'protected', 'private')))
 		{
-			$access = 'date';
+			$access = 'all';
 		}
 		
 		$this->_tags = Request::getVar('tags', array());
@@ -197,28 +202,13 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$this->_tags = preg_split('/,\s*/', $this->_tags);
 		}
 
-		$this->_search = Request::getString('search', '');
-
-		$config = Component::params('com_publications');
-		if ($return == 'metadata')
-		{
-			if ($config->get('show_ranking'))
-			{
-				$sort = 'ranking';
-			}
-			elseif ($config->get('show_rating'))
-			{
-				$sort = 'rating';
-			}
-		}
-		
 		// First, get totals
 		$total = $this->getPublications(
 			$group,
 			$authorized,
 			0,
 			$limitstart,
-			$sort,
+			$sortby,
 			$access
 		);
 
@@ -228,7 +218,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$authorized,
 			$limit,
 			$limitstart,
-			$sort,
+			$sortby,
 			$access
 		);
 		$results = array($r);
@@ -283,7 +273,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					$view->limitstart = $limitstart;
 					$view->limit = $limit;
 					$view->total = $total;
-					$view->sort = $sort;
+					$view->sortby = $sort;
 					$view->access = $access;
 					$view->search = $this->_search;
 					$view->tags = $this->_tags;
@@ -383,7 +373,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		// Get records
 		$filters['limit']         = $limit;
 		$filters['start']         = $limitstart;
-		$filters['sortby']        = Request::getVar('sortby', 'date');
+		$filters['sortby']        = $sort;
 		$filters['sortdir']       = Request::getVar('sortdir', 'DESC');
 		$filters['search']        = Request::getString('search', '');
 		
