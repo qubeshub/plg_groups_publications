@@ -10,9 +10,13 @@ defined('_HZEXEC_') or die();
 
 use Hubzero\Pagination\Paginator;
 use Components\Publications\Tables\MasterType;
+use Components\Publications\Models\PubCloud;
+use Components\Tags\Models\FocusArea;
+use Components\Search\Helpers\SolrHelper;
 
 include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
 require_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
+require_once Component::path('com_search') . "/helpers/solr.php";
 
 /**
  * Groups Plugin class for publications
@@ -118,11 +122,13 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			$this->_group = $group;
 		}
 		$return = 'html';
-		$active = 'publications';
+		$active = $this->_name;
 		
 		// The output array we're returning
 		$arr = array(
-			'html'=>''
+			'html'=>'',
+			'metadata' => array(),
+			'name' => $active
 		);
 		
 		// get this area details
@@ -136,15 +142,15 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 				$return = 'metadata';
 			}
 		}
-		
-		//set group members plugin access level
-		$group_plugin_acl = $access[$active];
-		
-		//get the group members
-		$members = $group->get('members');
-		
+					
 		if ($return == 'html')
 		{
+			//set group members plugin access level
+			$group_plugin_acl = $access[$active];
+
+			//get the group members
+			$this->members = $group->get('members');
+
 			// if set to nobody make sure cant access
 			if ($group_plugin_acl == 'nobody')
 			{
@@ -167,157 +173,229 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			}
 			
 			// check to see if user is member and plugin access requires members
-			if (!in_array(User::get('id'), $members) && $group_plugin_acl == 'members' && $authorized != 'admin')
+			if (!in_array(User::get('id'), $this->members) && $group_plugin_acl == 'members' && $authorized != 'admin')
 			{
 				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MEMBER', ucfirst($active)) . '</p>';
 				return $arr;
 			}
-		}
-		
-		$database = App::get('db');
-		
-		// get a master type (if available)
-		$this->_master_type = new MasterType($database);
-		$this->_master_type->loadByOwnerGroup($group->get('gidNumber'));
 
-		$this->_search = Request::getString('search', '');
-		
-		// Incoming paging vars
-		$sort = Request::getVar('sort', 'relevance');
-		if (!in_array($sort, array('relevance', 'date', 'views', 'downloads')))
-		{
-			$sort = 'relevance';
-		}
-		// Relevance = date when search is empty
-		$sortby = ($sort == 'relevance' && !$this->_search ? 'date' : $sort);
-		
-		$access = Request::getVar('access', 'all');
-		if (!in_array($access, array('all', 'public', 'protected', 'private')))
-		{
-			$access = 'all';
-		}
-		
-		$this->_tags = Request::getVar('tags', array());
-		if (is_string($this->_tags)) {
-			$this->_tags = preg_split('/,\s*/', $this->_tags);
-		}
+			// Get master type for group (if it exists)
+			$this->database = App::get('db');
+			$this->_master_type = new MasterType($this->database);
+			$this->_master_type->loadByOwnerGroup($this->_group->get('gidNumber'));
 
-		// First, get totals
-		$total = $this->getPublications(
-			$group,
-			$authorized,
-			0,
-			$limitstart,
-			$sortby,
-			$access
-		);
+			//option and paging vars
+			$this->option = $option;
+			$this->limitstart = $limitstart;
+			$this->limit = $limit;
+			$this->base = 'index.php?option=' . $this->option . '&cn=' . $this->_group->get('cn') . '&active=' . $this->_name;
 
-		// Get the search results THIS is where search the database r
-		$r = $this->getPublications(
-			$group,
-			$authorized,
-			$limit,
-			$limitstart,
-			$sortby,
-			$access
-		);
-		$results = array($r);
-
-		// Build the output
-		switch ($return)
-		{
-			case 'html':
-				// If we have a specific ID and we're a supergroup, serve a publication page inside supergroup template
-				if (Request::getVar('id', Request::getVar('alias', null)) && $group->type == 3)
+			$path = Request::path();
+			if (strstr($path, '/'))
+			{
+				$bits = $this->_parseUrl();
+				// Section name
+				if (isset($bits[0]) && trim($bits[0]))
 				{
-					// Load neccesities for com_publications controller
-					$lang = App::get('language');
-					$lang->load('com_publications', \Component::path('com_publications') . DS . 'site');
-
-					require_once \Component::path('com_publications') . DS .'models' . DS . 'publication.php';
-					require_once \Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php';
-					require_once \Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
-					
-					// Set the request up to make it look like a user made the request to the controller
-					Request::setVar('task', 'view');
-					Request::setVar('option', 'com_publications');
-					Request::setVar('active', Request::get('tab_active', 'about'));
-					// Add some extra variables to let the tab view know we need a different base url
-					Request::setVar('base_url', 'index.php?option=' . $this->option . '&cn=' . $group->cn . '&active=publications');
-					// Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
-					Request::setVar('noview', 1);
-					
-					// Instantiate the controller and have it execute (base_path needed so view knows where template files are located)
-					$newtest = new \Components\Publications\Site\Controllers\Publications(
-						array('base_path' => \Component::path('com_publications') . DS . 'site',
-							  'group' => $this->_group)
-					);
-					$newtest->execute();
-					
-					// Set up the return for the plugin 'view'
-					$arr['html'] = $newtest->view->loadTemplate();
-					$arr['metadata']['count'] = $total;
-				}
-				else
-				{			
-					// Instantiate a vew
-					$no_html = Request::getInt('no_html', 0);
-					$view = $this->view((!$no_html ? 'default' : 'cards'), 'results');
-				
-					// Pass the view some info
-					$view->option = $option;
-					$view->group = $group;
-					$view->authorized = $authorized;
-					$view->results = $results;
-					$view->active = $active;
-					$view->limitstart = $limitstart;
-					$view->limit = $limit;
-					$view->total = $total;
-					$view->sortby = $sort;
-					$view->access = $access;
-					$view->search = $this->_search;
-					$view->tags = $this->_tags;
-
-					// Initiate paging
-					$pageNav = new Paginator(
-						$total,
-						$limitstart,
-						$limit
-					);
-					$view->pageNav = $pageNav;
-					
-					foreach ($this->getErrors() as $error)
+					if ($bits[0] == 'browse')
 					{
-						$view->setError($error);
+						$action = 'browse';
 					}
-
-					// Return the output
-					if (!$no_html) {
-						$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
-						$arr['html'] = $view->loadTemplate();
+				} else {
+					// Defaults
+					if (Request::getVar('id', Request::getVar('alias', null)) && $this->_group->type == 3) {
+						$action = 'view';
 					} else {
-						$response = Array(
-							'status' => \App::get('notification')->messages(),
-							'html' => $view->loadTemplate()
-						);
-
-						// Ugly brute force method of cleaning output
-						ob_clean();
-						echo json_encode($response);
-						exit();
+						$action = 'browse';
 					}
 				}
-			break;
-			
-			case 'metadata':
-				$arr['metadata']['count'] = count($results[0]); // We need to clean this up - was $total, which should work
-			break;
+			}
+			$action = Request::getCmd('action', $action, 'post');
+
+			switch ($action)
+			{
+				// Settings
+				case 'browse':
+					$arr['html'] .= $this->browseTask();
+					break;
+				case 'view':
+					$arr['html'] .= $this->viewTask();
+					break;
+				default:
+					$arr['html'] .= $this->browseTask();
+					break;
+			}
 		}
-		
+				
+		$arr['metadata']['count'] = 0;
+
 		// Return the output
 		return $arr;
 	}
 	
+	/**
+	 * Parse an SEF URL into its component bits
+	 * stripping out the path leading up to the publications plugin
+	 *
+	 * @return  string
+	 */
+	private function _parseUrl()
+	{
+		static $path;
+
+		if (!$path)
+		{
+			$path = Request::path();
+			$path = str_replace(Request::base(true), '', $path);
+			$path = str_replace('index.php', '', $path);
+			$path = '/' . trim($path, '/');
+
+			if ($path == '/groups/' . $this->_group->get('cn') . '/publications')
+			{
+				$path = array();
+				return $path;
+			}
+
+			$path = ltrim($path, DS);
+			$path = explode('/', $path);
+
+			$paths = array();
+			$start = false;
+			foreach ($path as $bit)
+			{
+				if ($bit == 'groups' && !$start)
+				{
+					$start = true;
+					continue;
+				}
+				if ($start)
+				{
+					$paths[] = $bit;
+				}
+			}
+			if (count($paths) >= 2)
+			{
+				array_shift($paths); // Remove group cn
+				array_shift($paths); // Remove 'publications'
+			}
+			$path = $paths;
+		}
+
+		return $path;
+	}
+
+	public function viewTask()
+	{
+		// Load neccesities for com_publications controller
+		$lang = App::get('language');
+		$lang->load('com_publications', \Component::path('com_publications') . DS . 'site');
+
+		require_once \Component::path('com_publications') . DS .'models' . DS . 'publication.php';
+		require_once \Component::path('com_publications') . DS .'site' . DS . 'controllers' . DS . 'publications.php';
+		require_once \Component::path('com_publications') . DS .'helpers' . DS . 'html.php';
+		
+		// Set the request up to make it look like a user made the request to the controller
+		Request::setVar('task', 'view');
+		Request::setVar('option', 'com_publications');
+		Request::setVar('active', Request::get('tab_active', 'about'));
+		// Add some extra variables to let the tab view know we need a different base url
+		Request::setVar('base_url', 'index.php?option=' . $this->option . '&cn=' . $this->_group->cn . '&active=publications');
+		// Added a noview variable to indicate to the controller that we do not want it to try to display the view, simply build it
+		Request::setVar('noview', 1);
+		
+		// Instantiate the controller and have it execute (base_path needed so view knows where template files are located)
+		$newtest = new \Components\Publications\Site\Controllers\Publications(
+			array('base_path' => \Component::path('com_publications') . DS . 'site',
+				  'group' => $this->_group)
+		);
+		$newtest->execute();
+		
+		// Set up the return for the plugin 'view'
+		return $newtest->view->loadTemplate();
+	}
+	
+	public function browseTask() 
+	{
+		// Incoming
+		$search = Request::getString('search', '');
+		$sortBy = Request::getCmd('sortby', 'score');
+		$limit = Request::getInt('limit', Config::get('list_limit'));
+		$start = Request::getInt('limitstart', 0);
+		$fl = Request::getString('fl', '');
+		$fl = $fl ? explode(',', $fl) : array();
+		$no_html = Request::getInt('no_html', 0);
+
+		// Get focus areas
+		$qubes_mtype_id = $this->_master_type->getType('qubesresource')->id;
+		$mtype = $this->_master_type->id ? $this->_master_type->alias : null;
+		$mtype_id = $this->_master_type->id ? $this->_master_type->id : $qubes_mtype_id;
+		$fas = FocusArea::fromObject($mtype_id);
+
+		// Perform the search
+		$solr = new SolrHelper;
+		$filters = array_filter(array("fl" => $fl, "type" => $mtype, "gid" => $mtype ? null : $this->_group->gidNumber));
+		$search_results = $solr->search($search, $sortBy, $limit, $start, $filters, $fas);
+		$results = $search_results['results'];
+		$numFound = $search_results['numFound'];
+		$facets = $search_results['facets'];
+		$leaves = $search_results['leaves'];
+		$filters = $search_results['filters']; // Used for debugging for now
+
+		// Convert results to publications
+		$pubs = array();
+		foreach ($results as $result) {
+			$pid = explode('-', $result['id'])[1];
+			$pub = \Components\Publications\Models\Orm\Publication::oneOrFail($pid);
+			$vub = $pub->getActiveVersion();
+			$vub->set('keywords', (new PubCloud($vub->get('id')))->render('list', array('type' => 'keywords', 'key' => 'raw_tag')));
+			$pubs[] = $vub;
+		}
+
+		// Initiate paging
+		$pageNav = new Paginator(
+			$numFound,
+			$start,
+			$limit
+		);
+		$pageNav->setAdditionalUrlParam('fl', count($fl) > 1 ? implode(",", $fl) : implode($fl));
+		$pageNav->setAdditionalUrlParam('search', $search);
+
+		$view = $this->view((!$no_html ? 'default' : 'cards'), 'browse')
+					->set('results', $pubs)
+					->set('group', $this->_group)
+					->set('option', $this->option)
+					->set('fas', $fas)
+					->set('total', $numFound)
+					->set('leaves', $leaves)
+					->set('filters', $filters)
+					->set('facets', $facets)
+					->set('sortBy', $sortBy)
+					->set('search', $search)
+					->set('pageNav', $pageNav)
+					->setErrors($this->getErrors());
+				
+		// Return the output
+		if (!$no_html) {
+			return $view->loadTemplate();
+		} else {
+			$response = Array(
+				'status' => \App::get('notification')->messages(),
+				'facets' => array_map(function($facet) { return $facet->getValues(); }, $facets->getFacets()), // DEBUG
+				'filters' => $filters, // DEBUG
+				'leaves' => $leaves,
+				'html' => [
+					'cards' => $this->view->setLayout('cards')->loadTemplate(),
+					'filters' => $this->view->setLayout('filters')->loadTemplate()
+				]
+			);
+
+			// Ugly brute force method of cleaning output
+			ob_clean();
+			echo json_encode($response);
+			exit();
+		}
+	}
+
 	/**
 	 * Retrieve records for items associated with this group
 	 *
