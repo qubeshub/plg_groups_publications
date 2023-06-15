@@ -21,7 +21,7 @@ $activeTags= Request::getString('active-tags', '');
     <?php if ($this->group->published == 1) { ?>
         <ul id="page_options">
             <li>
-                <a id="submit-resource" class="icon-add add btn" href="<?php echo Route::url('index.php?option=com_publications&task=submit&action=choose&base=' . $this->mtype); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_START_A_CONTRIBUTION'); ?></a>
+                <a id="submit-resource" class="icon-add add btn" href="<?php echo Route::url('index.php?option=com_publications&task=submit&action=choose&gid=' . $this->group->get('gidNumber') . '&base=' . $this->mtype); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_START_A_CONTRIBUTION', $this->mtype_alias); ?></a>
             </li>
         </ul>
     <?php } ?>
