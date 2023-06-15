@@ -19,7 +19,7 @@ $activeTags= Request::getString('active-tags', '');
 <?php if ($this->group->published == 1) { ?>
 	<ul id="page_options">
 		<li>
-			<a class="icon-add add btn" href="<?php echo Route::url('index.php?option=com_publications&task=draft&group=' . $this->group->get('cn')); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_START_A_CONTRIBUTION'); ?></a>
+			<a id="submit-resource" class="icon-add add btn" href="<?php echo Route::url('index.php?option=com_publications&task=submit&action=choose&base=' . $this->mtype); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_START_A_CONTRIBUTION'); ?></a>
 		</li>
 	</ul>
 <?php } ?>
