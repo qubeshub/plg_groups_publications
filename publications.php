@@ -327,24 +327,24 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$fl = $fl ? explode(',', $fl) : array();
 		$no_html = Request::getInt('no_html', 0);
 
-		// Get focus areas
+		$gg = Group::oneOrFail($this->_group->gidNumber);
+
+		// Get master type and focus areas
 		$qubes_mtype_id = $this->_master_type->getType('qubesresource')->id;
 		$mtype = $this->_master_type->id ? $this->_master_type->alias : null;
 		$mtype_id = $this->_master_type->id ? $this->_master_type->id : $qubes_mtype_id;
+		$by_group = !$mtype || ($this->_master_type->ownergroup != $this->_group->gidNumber);
 		$fas = FocusArea::fromObject($mtype_id);
 
 		// Get group ids (including children)
 		$gids = array();
-		$gg = Group::oneOrFail($this->_group->gidNumber);
-		if ($gg) {
-			$gids[] = $gg->gidNumber;
-			$gids = array_merge($gids, $gg->children()->rows()->fieldsByKey('gidNumber'));
-			$gids = array_map(function($gid) { return '"' . $gid . '"'; }, $gids);
-		}
+		$gids[] = $gg->gidNumber;
+		$gids = array_merge($gids, $gg->children()->rows()->fieldsByKey('gidNumber'));
+		$gids = array_map(function($gid) { return '"' . $gid . '"'; }, $gids);
 		
 		// Perform the search
 		$solr = new SolrHelper;
-		$filters = array_filter(array("fl" => $fl, "type" => $mtype, "gid" => $mtype ? null : $gids));
+		$filters = array_filter(array("fl" => $fl, "type" => $mtype, "gid" => $by_group ? $gids : null));
 		$search_results = $solr->search($search, $sortBy, $limit, $start, $filters, $fas);
 		$results = $search_results['results'];
 		$numFound = $search_results['numFound'];
@@ -409,7 +409,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	}
 
 	/**
-	 * Retrieve records for items associated with this group
+	 * Retrieve records from database for items associated with this group
 	 *
 	 * @param      object  $group      Group that owns the records
 	 * @param      unknown $authorized Authorization level
