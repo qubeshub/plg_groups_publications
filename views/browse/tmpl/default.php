@@ -80,7 +80,9 @@ $relevance_classes = implode($relevance_classes, ' ');
                     <div class="container" id="sortby">
                         <nav class="entries-filters">
                             <ul class="entries-menu order-options">
-                                <li><a <?php echo ($this->sortBy == 'date') ? 'class="active"' : ''; ?> data-value="publish_up" title="Date">Date</a></li>
+                                <li><a <?php echo ($this->sortBy == 'downloads') ? 'class="active"' : ''; ?> data-value="downloads" title="Downloads">Downloads</a></li>
+                                <li><a <?php echo ($this->sortBy == 'views') ? 'class="active"' : ''; ?> data-value="views" title="Views">Views</a></li>
+                                <li><a <?php echo ($this->sortBy == 'date') ? 'class="active"' : ''; ?> data-value="date" title="Date">Date</a></li>
                                 <li><a <?php echo ($relevance_classes) ? 'class="' . $relevance_classes . '"' : ''; ?> data-value="score" title="Relevance">Relevance</a></li>
                             </ul>
                         </nav>
