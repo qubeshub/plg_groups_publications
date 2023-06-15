@@ -384,8 +384,8 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 				'filters' => $filters, // DEBUG
 				'leaves' => $leaves,
 				'html' => [
-					'cards' => $this->view->setLayout('cards')->loadTemplate(),
-					'filters' => $this->view->setLayout('filters')->loadTemplate()
+					'cards' => $view->setLayout('cards')->loadTemplate(),
+					'filters' => $view->setLayout('filters')->loadTemplate()
 				]
 			);
 

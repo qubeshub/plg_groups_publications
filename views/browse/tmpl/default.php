@@ -29,7 +29,7 @@ $activeTags= Request::getString('active-tags', '');
         <div class="browse-mobile-btn-wrapper">
             <button class="browse-mobile-btn"><span class="hz-icon icon-filter">Filter</span></button>
         </div>
-        <form action="<?php echo Route::url('index.php?option=' . $this->option . '&task=browse'); ?>" method="post" id="filter-form" enctype="multipart/form-data">
+        <form action="<?php echo Route::url('index.php?option=com_groups&cn=' . $this->group->get('cn') . '&active=publications/browse'); ?>" method="post" id="filter-form" enctype="multipart/form-data">
             <div class="resource-container">
                 <div class="filter-container">
                     <div class="text-search-options">
