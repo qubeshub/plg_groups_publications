@@ -1,0 +1,26 @@
+@use '../../../../../templates/bmc/css/pages/mixins' as m;
+
+.group-publications-header {
+    @include m.respond-at(50em) {
+        @include m.flexbox();
+    }
+    @include m.flexbox(wrap);
+}
+
+.additional-resources-search {
+    @include m.respond-at(50em) {
+        padding: .5em 2em;
+    }
+    padding: .5em 0;
+}
+
+.filter-container {
+    .btn {
+        font-size: .9rem !important;
+    }
+}
+
+// Fix sticky announcements in supergroups
+.sticky {
+    position: static !important;
+}

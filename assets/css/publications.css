@@ -1,0 +1,27 @@
+.group-publications-header {
+  display: flex;
+  flex-wrap: wrap;
+}
+@media only screen and (min-width: 50em) {
+  .group-publications-header {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+}
+
+.additional-resources-search {
+  padding: 0.5em 0;
+}
+@media only screen and (min-width: 50em) {
+  .additional-resources-search {
+    padding: 0.5em 2em;
+  }
+}
+
+.filter-container .btn {
+  font-size: 0.9rem !important;
+}
+
+.sticky {
+  position: static !important;
+}/*# sourceMappingURL=publications.css.map */

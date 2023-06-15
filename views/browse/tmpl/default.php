@@ -8,6 +8,7 @@
 // No direct access
 defined('_HZEXEC_') or die();
 $this->css()
+     ->css('intro.css', 'com_publications')
 	 ->css('browse.css', 'com_publications')
      ->js('browse.js', 'com_publications');
 
@@ -16,13 +17,19 @@ $fl = Request::getString('fl', '');
 $activeTags= Request::getString('active-tags', '');
 ?>
 
-<?php if ($this->group->published == 1) { ?>
-	<ul id="page_options">
-		<li>
-			<a id="submit-resource" class="icon-add add btn" href="<?php echo Route::url('index.php?option=com_publications&task=submit&action=choose&base=' . $this->mtype); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_START_A_CONTRIBUTION'); ?></a>
-		</li>
-	</ul>
-<?php } ?>
+<section class="group-publications-header">
+    <?php if ($this->group->published == 1) { ?>
+        <ul id="page_options">
+            <li>
+                <a id="submit-resource" class="icon-add add btn" href="<?php echo Route::url('index.php?option=com_publications&task=submit&action=choose&base=' . $this->mtype); ?>"><?php echo Lang::txt('PLG_GROUPS_PUBLICATIONS_START_A_CONTRIBUTION'); ?></a>
+            </li>
+        </ul>
+    <?php } ?>
+    <div class="additional-resources-search">
+        <h5>Want to find additional resources? <a href="/publications/browse">Browse resources on QUBES</a>! <br>
+        QUBES hosts not only the resources shown here, but many more created by the broader QUBES community.</h5>
+    </div>
+</section>
 
 <section class="section live-update">
     <div aria-live="polite" id="live-update-wrapper">
