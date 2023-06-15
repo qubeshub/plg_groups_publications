@@ -13,8 +13,10 @@ use Components\Publications\Tables\MasterType;
 use Components\Publications\Models\PubCloud;
 use Components\Tags\Models\FocusArea;
 use Components\Search\Helpers\SolrHelper;
+use Components\Groups\Models\Orm\Group;
 
 include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
+include_once Component::path('com_groups') . DS . 'models' . DS . 'orm' . DS . 'group.php';
 require_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
 require_once Component::path('com_search') . "/helpers/solr.php";
 
@@ -331,9 +333,18 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		$mtype_id = $this->_master_type->id ? $this->_master_type->id : $qubes_mtype_id;
 		$fas = FocusArea::fromObject($mtype_id);
 
+		// Get group ids (including children)
+		$gids = array();
+		$gg = Group::oneOrFail($this->_group->gidNumber);
+		if ($gg) {
+			$gids[] = $gg->gidNumber;
+			$gids = array_merge($gids, $gg->children()->rows()->fieldsByKey('gidNumber'));
+			$gids = array_map(function($gid) { return '"' . $gid . '"'; }, $gids);
+		}
+		
 		// Perform the search
 		$solr = new SolrHelper;
-		$filters = array_filter(array("fl" => $fl, "type" => $mtype, "gid" => $mtype ? null : $this->_group->gidNumber));
+		$filters = array_filter(array("fl" => $fl, "type" => $mtype, "gid" => $mtype ? null : $gids));
 		$search_results = $solr->search($search, $sortBy, $limit, $start, $filters, $fas);
 		$results = $search_results['results'];
 		$numFound = $search_results['numFound'];
