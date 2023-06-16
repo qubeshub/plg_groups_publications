@@ -357,9 +357,10 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		foreach ($results as $result) {
 			$pid = explode('-', $result['id'])[1];
 			$pub = \Components\Publications\Models\Orm\Publication::oneOrFail($pid);
-			$vub = $pub->getActiveVersion();
-			$vub->set('keywords', (new PubCloud($vub->get('id')))->render('list', array('type' => 'keywords', 'key' => 'raw_tag')));
-			$pubs[] = $vub;
+			if ($vub = $pub->getActiveVersion()) {
+				$vub->set('keywords', (new PubCloud($vub->get('id')))->render('list', array('type' => 'keywords', 'key' => 'raw_tag')));
+				$pubs[] = $vub;
+			}
 		}
 
 		// Initiate paging
