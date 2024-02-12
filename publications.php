@@ -150,8 +150,9 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 			//set group members plugin access level
 			$group_plugin_acl = $access[$active];
 
-			//get the group members
+			// Get the group members and managers
 			$this->members = $group->get('members');
+			$this->managers = $group->get('managers');
 
 			// if set to nobody make sure cant access
 			if ($group_plugin_acl == 'nobody')
@@ -160,8 +161,8 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 				return $arr;
 			}
 			
-			// check if guest and force login if plugin access is registered or members
-			if (User::isGuest() && ($group_plugin_acl == 'registered' || $group_plugin_acl == 'members'))
+			// Check if guest and force login if plugin access is registered or members or managers
+			if (User::isGuest() && ($group_plugin_acl == 'registered' || $group_plugin_acl == 'members' || $group_plugin_acl == 'managers'))
 			{
 				$area = Request::getWord('area', 'publications');
 				$url = Route::url('index.php?option=com_groups&cn=' . $group->get('cn') . '&active=' . $active . '&area=' . $area);
@@ -180,6 +181,13 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MEMBER', ucfirst($active)) . '</p>';
 				return $arr;
 			}
+
+			// Check to see if user is manager and plugin access requires managers
+			if (!in_array(User::get('id'), $this->managers) && $group_plugin_acl == 'managers' && $authorized != 'admin')
+			{
+				$arr['html'] = '<p class="info">' . Lang::txt('GROUPS_PLUGIN_REQUIRES_MANAGER', ucfirst($active)) . '</p>';
+				return $arr;
+			}		   
 
 			// Get master type for group (if it exists)
 			$this->database = App::get('db');

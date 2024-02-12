@@ -22,6 +22,7 @@
 					<option value="anyone">Any HUB Visitor</option>
 					<option value="registered">Only Registered HUB Users</option>
 					<option value="members">Only Group Members</option>
+					<option value="managers">Only Group Managers</option>
 					<option value="nobody">Disabled/Off</option>
 				</field>
 				<field name="display_tab" type="list" default="1" label="Display in Menu" description="Display 'Publications' in group menu.">
