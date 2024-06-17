@@ -92,6 +92,7 @@ $relevance_classes = implode($relevance_classes, ' ');
                         echo $this->view('cards', 'browse')
                             ->set('results', $this->results)
                             ->set('pageNav', $this->pageNav)
+                            ->set('base', $this->base)
                             ->loadTemplate();
                         ?>
                 </div>

@@ -22,6 +22,7 @@ $no_html = Request::getInt('no_html', 0);
 	{
 		$html .= $this->view('_card') //calling _card view here
 			->set('row', $row)
+			->set('base', $this->base)
 			->loadTemplate();
 	}
 	echo $html;

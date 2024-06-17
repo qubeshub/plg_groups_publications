@@ -391,6 +391,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					->set('facets', $facets)
 					->set('sortBy', $sortBy)
 					->set('search', $search)
+					->set('base', $this->base)
 					->set('mtype', $mtype ? $mtype : 'qubesresource')
 					->set('mtype_alias', $mtype ? $this->_master_type->type : 'QUBES')
 					->set('pageNav', $pageNav)
