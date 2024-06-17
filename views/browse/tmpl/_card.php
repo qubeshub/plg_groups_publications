@@ -13,7 +13,7 @@ $config = Component::params('com_publications');
 $rparams = new \Hubzero\Config\Registry($this->row->params);
 $params = $config;
 $params->merge($rparams);
-$keywords = array_reduce($this->row->keywords, function($carry, $kw) { return $carry . '<span class="keyword"><a href="' . $this->base . ((strpos($this->base, '?') === false) ? '?' : '&') . 'search=' . $kw . '">' . $kw . '</a></span>'; });
+$keywords = array_reduce($this->row->keywords, function($carry, $kw) { return $carry . '<span class="keyword"><a href="' . $this->base . ((strpos($this->base, '?') === false) ? '?' : '&') . 'search=' . urlencode($kw) . '">' . $kw . '</a></span>'; });
 $stats = $this->row->stats()[0];
 ?>
 
