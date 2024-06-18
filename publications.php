@@ -379,6 +379,13 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 		);
 		$pageNav->setAdditionalUrlParam('fl', count($fl) > 1 ? implode(",", $fl) : implode($fl));
 		$pageNav->setAdditionalUrlParam('search', $search);
+		$pageNav->setAdditionalUrlParam('sortby', $sortBy);
+		
+		// Create base for keyword urls
+		$url = parse_url($pageNav->getData()->all->link);
+		parse_str(html_entity_decode($url['query']), $queryParams);
+		unset($queryParams['search'], $queryParams['view'], $queryParams['layout'], $queryParams['controller'], $queryParams['action']); // Clean up and remove search from query params
+		$base = $url['path'] . '?' . http_build_query($queryParams); // Rebuid query string without search
 
 		$view = $this->view((!$no_html ? 'default' : 'cards'), 'browse')
 					->set('results', $pubs)
@@ -391,7 +398,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 					->set('facets', $facets)
 					->set('sortBy', $sortBy)
 					->set('search', $search)
-					->set('base', $this->base)
+					->set('base', $base)
 					->set('mtype', $mtype ? $mtype : 'qubesresource')
 					->set('mtype_alias', $mtype ? $this->_master_type->type : 'QUBES')
 					->set('pageNav', $pageNav)
