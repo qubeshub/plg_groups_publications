@@ -118,7 +118,7 @@ class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
 	 * @param      array   $areas      Active area(s)
 	 * @return     array
 	 */
-	public function onGroup($group, $option, $authorized, $limit=0, $limitstart=0, $action='', $access, $areas=null)
+	public function onGroup($group, $option, $authorized, $limit, $limitstart, $action, $access, $areas=null)
 	{
 		if (empty($this->_group)) {
 			$this->_group = $group;
