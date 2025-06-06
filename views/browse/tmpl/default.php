@@ -19,7 +19,7 @@ $activeTags= Request::getString('active-tags', '');
 $relevance_classes = array();
 if ($this->sortBy == 'score') { $relevance_classes[] = 'active'; }
 if (!$this->search) { $relevance_classes[] = 'disabled'; }
-$relevance_classes = implode($relevance_classes, ' ');
+$relevance_classes = implode(' ', $relevance_classes);
 ?>
 
 <section class="group-publications-header">
