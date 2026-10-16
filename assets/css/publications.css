@@ -24,4 +24,11 @@
 
 .sticky {
   position: static !important;
-}/*# sourceMappingURL=publications.css.map */
+}
+
+/* Ensure links in text blocks are distinguishable (WCAG link-in-text-block) */
+.group-publications-wrap p a,
+.group-publications-wrap .pub-body a {
+  text-decoration: underline;
+}
+/*# sourceMappingURL=publications.css.map */

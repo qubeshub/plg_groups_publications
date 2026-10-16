@@ -51,7 +51,7 @@ $relevance_classes = implode(' ', $relevance_classes);
                             <input type="hidden" name="sortby" value="<?php echo $this->sortBy; ?>" />
                         </fieldset>
                         <fieldset>
-                            <h5>Text Search:</h5>
+                            <label for="search">Text Search:</label>
                             <div class="search-text-wrapper">
                                 <?php echo \Hubzero\Html\Builder\Input::text("search", $this->search); ?>
                                 <input type="submit" class="btn" id="search-btn" value="Apply">
