@@ -17,13 +17,12 @@ use Components\Groups\Models\Orm\Group;
 
 include_once Component::path('com_publications') . DS . 'models' . DS . 'publication.php';
 include_once Component::path('com_groups') . DS . 'models' . DS . 'orm' . DS . 'group.php';
-require_once PATH_APP . DS . 'libraries' . DS . 'Qubeshub' . DS . 'Plugin' . DS . 'Plugin.php';
 require_once Component::path('com_search') . "/helpers/solr.php";
 
 /**
  * Groups Plugin class for publications
  */
-class plgGroupsPublications extends \Qubeshub\Plugin\Plugin
+class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 {
 	
 	/**
