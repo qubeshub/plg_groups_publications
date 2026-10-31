@@ -13,7 +13,10 @@ $config = Component::params('com_publications');
 $rparams = new \Hubzero\Config\Registry($this->row->params);
 $params = $config;
 $params->merge($rparams);
-$keywords = array_reduce($this->row->keywords, function($carry, $kw) { return $carry . '<span class="keyword"><a href="' . $this->base . ((strpos($this->base, '?') === false) ? '?' : '&') . 'search=' . urlencode($kw) . '">' . $kw . '</a></span>'; });
+$keywords = array_reduce($this->row->keywords, function($carry, $kw) {
+	$href = $this->base . ((strpos($this->base, '?') === false) ? '?' : '&') . 'search=' . urlencode($kw);
+	return $carry . '<span class="keyword"><a href="' . $this->escape($href) . '" rel="nofollow">' . $this->escape($kw) . '</a></span>';
+});
 $stats = $this->row->stats()[0];
 ?>
 
@@ -23,10 +26,10 @@ $stats = $this->row->stats()[0];
 	</div>
 
 	<div class="coursesource-card-contents">
-		<h5><a href="<?php echo Route::url($this->row->link('version')); ?>"><?php echo $this->row->title; ?></a></h5>
+		<h5><a href="<?php echo Route::url($this->row->link('version')); ?>"><?php echo $this->escape($this->row->title); ?></a></h5>
 
 		<p class="pub-authors" style="display:none;"><span class="author">Author McAuthorson</span><span class="author">Author McAuthorson</span><span class="author">Author McAuthorson</span></p>
-		<p class="pub-version" style="display:none;">Version: <?php echo $this->row->get('version_label'); ?></p>
+		<p class="pub-version" style="display:none;">Version: <?php echo $this->escape($this->row->get('version_label')); ?></p>
 		<p class="pub-fork" style="display:none;">Forked from: This other place</p>
 
 		<?php echo \Hubzero\Utility\Str::truncate(strip_tags($this->row->abstract), 200); ?>

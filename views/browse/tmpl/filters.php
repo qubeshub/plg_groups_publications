@@ -27,7 +27,7 @@ $n = 0;
 
     <h5 class="accordion-section" for="tagfa-<?php echo $fa_tag ?>" <?php echo ($disable ? "style='display:none;'" : "") ?>>
         <button type="button" aria-expanded="<?php echo (!empty($filters) ? 'true' : 'false') ?>" class="accord-trigger" aria-controls="filter-panel-<?php echo $n; ?>" id="accord-<?php echo $n; ?>">
-            <?php echo $fa->label; ?>
+            <?php echo $this->escape($fa->label); ?>
             <span class="facet-count" for="<?php echo $fa_tag ?>">(<?php echo $facets[$fa_tag]; ?>)</span>
             <span class="hz-icon icon-chevron-down"></span>
         </button>

@@ -323,13 +323,43 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		return $newtest->view->loadTemplate();
 	}
 	
-	public function browseTask() 
+	public function browseTask()
 	{
+		// Same gate as the component's browse (d825674d48): who may browse and
+		// search is the com_publications browse_access view level, Public by
+		// default. SiteController::requireViewLevel() isn't available to a
+		// plugin, so its behaviour is repeated here.
+		$browseAccess = (int) \Component::params('com_publications')->get('browse_access', 1);
+		if (!in_array($browseAccess, User::getAuthorisedViewLevels()))
+		{
+			Lang::load('com_publications', \Component::path('com_publications') . DS . 'site');
+			$message = Lang::txt('COM_PUBLICATIONS_SEARCH_LOGIN_REQUIRED');
+
+			if (User::isGuest())
+			{
+				App::redirect(
+					Route::url('index.php?option=com_users&view=login&return=' . base64_encode(Request::current(true)), false),
+					$message,
+					'warning'
+				);
+				return '';
+			}
+
+			App::abort(403, $message);
+		}
+
 		// Incoming
 		$search = Request::getString('search', '');
 		$sortBy = Request::getCmd('sortby', 'score');
 		$limit = Request::getInt('limit', Config::get('list_limit'));
 		$start = Request::getInt('limitstart', 0);
+		// Cap the page size: every card costs several queries, so an
+		// unbounded ?limit= could exhaust memory in one request (d6800eec06)
+		if ($limit <= 0 || $limit > 100)
+		{
+			$limit = 100;
+		}
+		$start = max(0, $start);
 		$fl = Request::getString('fl', '');
 		$fl = $fl ? explode(',', $fl) : array();
 		$no_html = Request::getInt('no_html', 0);
@@ -376,6 +406,8 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			$start,
 			$limit
 		);
+		// Offer no page size above the 100 cap applied to $limit
+		$pageNav->setLimits(array(5, 10, 15, 20, 25, 30, 50, 100));
 		$pageNav->setAdditionalUrlParam('fl', count($fl) > 1 ? implode(",", $fl) : implode($fl));
 		$pageNav->setAdditionalUrlParam('search', $search);
 		$pageNav->setAdditionalUrlParam('sortby', $sortBy);
