@@ -33,20 +33,6 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 	protected $_autoloadLanguage = true;
 	
 	/**
-	 * Tags
-	 * 
-	 * @var object
-	 */
-	protected $_tags = null;
-
-	/**
-	 * Tags
-	 * 
-	 * @var object
-	 */
-	protected $_search = null;
-
-	/**
 	 * Active group
 	 * 
 	 * @var object
@@ -455,104 +441,5 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 			echo json_encode($response);
 			exit();
 		}
-	}
-
-	/**
-	 * Retrieve records from database for items associated with this group
-	 *
-	 * @param      object  $group      Group that owns the records
-	 * @param      unknown $authorized Authorization level
-	 * @param      mixed   $limit      SQL record limit
-	 * @param      integer $limitstart SQL record limit start
-	 * @param      string  $sort       The field to sort records by
-	 * @param      string  $access     Access level
-	 * @return     mixed Returns integer when counting records, array when retrieving records
-	 */
-	public function getPublications($group, $authorized, $limit=0, $limitstart=0, $sort='date', $access='all')
-	{
-		// Do we have a group cn?
-		if (!$group->get('cn'))
-		{
-			return array();
-		}
-
-		$database = App::get('db');
-		$pubmodel = new Components\Publications\Models\Publication();
-
-		$filters = array();
-		$filters['state']         = 1;
-		$filters['ignore_access'] = 1;
-
-		if ($this->_master_type->id) {
-			$filters['master_type'] = $this->_master_type->id;
-		} else {
-			$filters['group_owner'] = $group->get('gidNumber');
-		}
-		
-		// Tags and keywords
-		if ($this->_tags) {
-			$filters['tag'] = $this->_tags;
-		}
-		$no_html = Request::getInt('no_html', 0);
-		if ($no_html && isset($_POST['keywords']) && $_POST['keywords']) {
-			$keywords = preg_split('/,\s*/', $_POST['keywords']);
-			$filters['tag'] = array_merge($keywords, ($this->_tags ? $this->_tags : array()));
-		}
-
-		// Text search
-		if ($this->_search) {
-			$filters['search'] = $this->_search;
-		}
-
-		// Get count only?
-		if (!$limit) {
-			return $pubmodel->entries('count', $filters);
-		}
-
-		// Get records
-		$filters['limit']         = $limit;
-		$filters['start']         = $limitstart;
-		$filters['sortby']        = $sort;
-		$filters['sortdir']       = Request::getVar('sortdir', 'DESC');
-		$filters['search']        = Request::getString('search', '');
-		
-		$rows = $pubmodel->entries('list', $filters);
-
-		if ($rows)
-		{
-			// Loop through the results and set each item's HREF
-			foreach ($rows as $key => $row)
-			{
-				//if we were a supergroup, this would be different
-				if ($group->type == '3')
-				{
-					if ($row->alias)
-					{
-						$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&alias=' . $row->alias);
-					}
-					else
-					{
-						if ($row->lastPublicRelease()) {
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id . '&v=' . $row->lastPublicRelease()->version_number);
-						} else {
-							$rows[$key]->href = Route::url('index.php?option=com_groups&cn=' . $group->cn . '&active=publications&id=' . $row->id);
-						}
-					}
-				}
-				else
-				{
-					if ($row->alias)
-					{
-						$rows[$key]->href = Route::url('index.php?option=com_publications&alias=' . $row->alias);
-					}
-					else //most common case
-					{
-						$rows[$key]->href = Route::url('index.php?option=com_publications&id=' . $row->id);
-					}
-				}
-			}
-		}
-		// Return the results
-		return $rows;
 	}
 }
