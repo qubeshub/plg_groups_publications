@@ -400,7 +400,7 @@ class plgGroupsPublications extends \Hubzero\Plugin\Plugin
 		
 		// Create base for keyword urls
 		$url = parse_url($pageNav->getData()->all->link);
-		parse_str(html_entity_decode($url['query']), $queryParams);
+		parse_str(html_entity_decode($url['query'] ?? ''), $queryParams);
 		unset($queryParams['search'], $queryParams['view'], $queryParams['layout'], $queryParams['controller'], $queryParams['action']); // Clean up and remove search from query params
 		$base = $url['path'] . '?' . http_build_query($queryParams); // Rebuid query string without search
 
