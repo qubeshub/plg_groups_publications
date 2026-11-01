@@ -51,7 +51,7 @@ $relevance_classes = implode(' ', $relevance_classes);
                             <input type="hidden" name="sortby" value="<?php echo $this->sortBy; ?>" />
                         </fieldset>
                         <fieldset>
-                            <h5>Text Search:</h5>
+                            <label for="search">Text Search:</label>
                             <div class="search-text-wrapper">
                                 <?php echo \Hubzero\Html\Builder\Input::text("search", $this->search); ?>
                                 <input type="submit" class="btn" id="search-btn" value="Apply">
@@ -78,7 +78,7 @@ $relevance_classes = implode(' ', $relevance_classes);
                     </div>
                     <div class="total-results"></div>
                     <div class="container" id="sortby">
-                        <nav class="entries-filters">
+                        <nav class="entries-filters" aria-label="<?php echo Lang::txt('JGLOBAL_FILTER_AND_SORT_RESULTS'); ?>">
                             <ul class="entries-menu order-options">
                                 <li><a <?php echo ($this->sortBy == 'downloads') ? 'class="active"' : ''; ?> data-value="downloads" title="Downloads">Downloads</a></li>
                                 <li><a <?php echo ($this->sortBy == 'views') ? 'class="active"' : ''; ?> data-value="views" title="Views">Views</a></li>

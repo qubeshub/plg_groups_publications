@@ -22,7 +22,7 @@ $stats = $this->row->stats()[0];
 
 <div class="resource coursesource-card">
 	<div class="coursesource-card-img">
-		<img src="<?php echo Route::url($this->row->link('masterimage')); ?>">
+		<img src="<?php echo Route::url($this->row->link('masterimage')); ?>" alt="">
 	</div>
 
 	<div class="coursesource-card-contents">
