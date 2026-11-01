@@ -68,8 +68,8 @@ $relevance_classes = implode(' ', $relevance_classes);
                         ->set('facets', $this->facets)
                         ->loadTemplate();
                     ?> 
-                    <input type="hidden" id="fl" name="fl" value="<?php echo $fl; ?>">
-                    <input type="hidden" id="active-tags" name="active-tags" value="<?php echo $activeTags; ?>">
+                    <input type="hidden" id="fl" name="fl" value="<?php echo $this->escape($fl); ?>">
+                    <input type="hidden" id="active-tags" name="active-tags" value="<?php echo $this->escape($activeTags); ?>">
                 </div>
                 <div class="container">
                     <div class="active-filters-wrapper">
